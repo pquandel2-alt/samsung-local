@@ -1,0 +1,121 @@
+{
+  "title": "Samsung Local",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a Samsung device",
+        "description": "Enter one local address. Samsung Local probes only known endpoints on this host.",
+        "data": { "host": "IP address or hostname", "protocol": "Protocol" }
+      },
+      "pair": {
+        "title": "Pair the TV",
+        "description": "Select Submit, then allow Samsung Local on {host} using the TV prompt."
+      },
+      "ocf_auth": {
+        "title": "Authenticate the appliance",
+        "description": "Automatic setup makes one account-free request for Samsung's public certificate UUID. Import or manual identity modes work without that request.",
+        "data": {
+          "auth_type": "Authentication method",
+          "public_identity": "Public UUID (manual mode)",
+          "certificate": "Client certificate PEM",
+          "private_key": "Private key PEM",
+          "psk_identity": "PSK identity UUID",
+          "psk_key": "PSK (hex)"
+        }
+      },
+      "legacy_auth": {
+        "title": "Legacy appliance credentials",
+        "description": "The HTTPS-8888 protocol requires an existing local device token and client certificate.",
+        "data": {
+          "token": "Device token",
+          "certificate": "Client certificate PEM",
+          "private_key": "Private key PEM"
+        }
+      },
+      "confirm": {
+        "title": "Confirm device",
+        "description": "Add {name} ({model}) using {protocol}. {capabilities} functions were proven during setup."
+      },
+      "discovery_confirm": {
+        "title": "Discovered Samsung device",
+        "description": "Configure the Samsung device at {host}?"
+      },
+      "reconfigure": {
+        "title": "Change device address",
+        "data": { "host": "IP address or hostname" }
+      }
+    },
+    "error": {
+      "cannot_connect": "The device did not answer a supported local protocol.",
+      "invalid_host": "Enter one valid IP address or hostname.",
+      "invalid_auth": "The supplied local credentials are invalid.",
+      "auth_rejected": "The device rejected local authentication.",
+      "public_identity_unavailable": "The public identity could not be obtained. Use manual or imported credentials for offline setup.",
+      "legacy_not_supported": "This legacy appliance family is not safely mapped."
+    },
+    "abort": {
+      "already_configured": "This physical device is already configured.",
+      "cannot_connect": "The device is no longer reachable.",
+      "invalid_host": "Discovery did not provide a usable address.",
+      "reauth_successful": "Local authentication was updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Samsung Local options",
+        "data": {
+          "poll_interval": "Polling interval (seconds)",
+          "enable_wol": "Enable Wake-on-LAN",
+          "allow_writes_without_remote": "Allow non-critical settings while Smart Control reports off",
+          "debug_diagnostics": "Include additional non-secret diagnostics"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "machine_state": { "name": "Machine state" },
+      "program_progress": { "name": "Program progress" },
+      "program_progress_percentage": { "name": "Program progress" },
+      "remaining_time": { "name": "Remaining time" },
+      "estimated_finish": { "name": "Estimated finish" },
+      "error_code": { "name": "Error code" },
+      "energy_consumption": { "name": "Energy consumption" },
+      "power_consumption": { "name": "Power consumption" },
+      "connection_status": { "name": "Connection status" },
+      "job_beginning_status": { "name": "Start status" }
+    },
+    "binary_sensor": {
+      "cycle_active": { "name": "Running" },
+      "remote_control_enabled": { "name": "Remote control" },
+      "child_lock": { "name": "Child lock" },
+      "power": { "name": "Power" }
+    },
+    "button": {
+      "start": { "name": "Start" },
+      "pause": { "name": "Pause" },
+      "stop": { "name": "Stop" }
+    },
+    "select": {
+      "program": { "name": "Program" },
+      "temperature": { "name": "Temperature" },
+      "spin_speed": { "name": "Spin speed" },
+      "rinse_count": { "name": "Rinse count" },
+      "soil_level": { "name": "Soil level" },
+      "application": { "name": "Application" }
+    },
+    "switch": { "power": { "name": "Power" } },
+    "remote": { "remote": { "name": "Remote" } }
+  },
+  "exceptions": {
+    "command_failed": { "message": "The device rejected the command: {error}" },
+    "command_unsupported": { "message": "This device does not advertise that command." }
+  },
+  "issues": {
+    "unknown_capabilities": {
+      "title": "New local Samsung functions detected",
+      "description": "{device} reports {count} resources that Samsung Local does not map yet. Download redacted diagnostics and attach them to a device-support issue. Unknown resources are never exposed as arbitrary write controls."
+    }
+  }
+}

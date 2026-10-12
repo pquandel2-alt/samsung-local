@@ -1,0 +1,44 @@
+name: Prepare release artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version already present in manifest.json (for example 0.1.0-beta.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify requested version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(Path("custom_components/samsung_local/manifest.json").read_text())
+          requested = os.environ["REQUESTED_VERSION"]
+          if manifest["version"] != requested:
+              raise SystemExit(
+                  f"manifest version {manifest['version']!r} does not match {requested!r}"
+              )
+          PY
+      - name: Build HACS zip
+        run: cd custom_components/samsung_local && zip -r ../../samsung_local.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samsung-local-${{ inputs.version }}
+          path: samsung_local.zip
+          if-no-files-found: error
+
+      # This workflow intentionally creates only a downloadable CI artifact.
+      # Publishing a GitHub release or a stable tag requires explicit human action.

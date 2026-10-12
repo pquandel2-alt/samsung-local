@@ -1,0 +1,27 @@
+{
+  "title": "Samsung Local",
+  "config": {
+    "step": {
+      "user": { "title": "Samsung-Gerät hinzufügen", "description": "Gib eine lokale Adresse ein. Samsung Local prüft nur bekannte Endpunkte auf diesem Host.", "data": { "host": "IP-Adresse oder Hostname", "protocol": "Protokoll" } },
+      "pair": { "title": "Fernseher koppeln", "description": "Wähle Senden und erlaube Samsung Local anschließend am Fernseher {host}." },
+      "ocf_auth": { "title": "Haushaltsgerät authentifizieren", "description": "Die automatische Einrichtung ruft einmalig und kontofrei die öffentliche Zertifikats-UUID von Samsung ab. Import und manuelle Identität funktionieren ohne diesen Abruf.", "data": { "auth_type": "Authentifizierungsmethode", "public_identity": "Öffentliche UUID (manueller Modus)", "certificate": "Client-Zertifikat (PEM)", "private_key": "Privater Schlüssel (PEM)", "psk_identity": "PSK-Identitäts-UUID", "psk_key": "PSK (Hex)" } },
+      "legacy_auth": { "title": "Zugangsdaten für Altgerät", "description": "Das HTTPS-8888-Protokoll benötigt ein vorhandenes lokales Gerätetoken und Client-Zertifikat.", "data": { "token": "Gerätetoken", "certificate": "Client-Zertifikat (PEM)", "private_key": "Privater Schlüssel (PEM)" } },
+      "confirm": { "title": "Gerät bestätigen", "description": "{name} ({model}) mit {protocol} hinzufügen. Bei der Einrichtung wurden {capabilities} Funktionen nachgewiesen." },
+      "discovery_confirm": { "title": "Samsung-Gerät gefunden", "description": "Samsung-Gerät unter {host} einrichten?" },
+      "reconfigure": { "title": "Geräteadresse ändern", "data": { "host": "IP-Adresse oder Hostname" } }
+    },
+    "error": { "cannot_connect": "Das Gerät antwortet nicht über ein unterstütztes lokales Protokoll.", "invalid_host": "Gib eine gültige einzelne IP-Adresse oder einen Hostnamen ein.", "invalid_auth": "Die lokalen Zugangsdaten sind ungültig.", "auth_rejected": "Das Gerät hat die lokale Authentifizierung abgelehnt.", "public_identity_unavailable": "Die öffentliche Identität konnte nicht abgerufen werden. Nutze für eine Offline-Einrichtung den manuellen Modus oder importierte Zugangsdaten.", "legacy_not_supported": "Diese Altgerätefamilie ist nicht sicher abgebildet." },
+    "abort": { "already_configured": "Dieses physische Gerät ist bereits eingerichtet.", "cannot_connect": "Das Gerät ist nicht mehr erreichbar.", "invalid_host": "Die Erkennung lieferte keine nutzbare Adresse.", "reauth_successful": "Die lokale Authentifizierung wurde aktualisiert." }
+  },
+  "options": { "step": { "init": { "title": "Samsung-Local-Optionen", "data": { "poll_interval": "Abfrageintervall (Sekunden)", "enable_wol": "Wake-on-LAN aktivieren", "allow_writes_without_remote": "Unkritische Einstellungen erlauben, wenn Smart Control aus meldet", "debug_diagnostics": "Zusätzliche nicht geheime Diagnosen einschließen" } } } },
+  "entity": {
+    "sensor": { "machine_state": { "name": "Gerätezustand" }, "program_progress": { "name": "Programmfortschritt" }, "program_progress_percentage": { "name": "Programmfortschritt" }, "remaining_time": { "name": "Restzeit" }, "estimated_finish": { "name": "Voraussichtliches Ende" }, "error_code": { "name": "Fehlercode" }, "energy_consumption": { "name": "Energieverbrauch" }, "power_consumption": { "name": "Leistungsaufnahme" }, "connection_status": { "name": "Verbindungsstatus" }, "job_beginning_status": { "name": "Startstatus" } },
+    "binary_sensor": { "cycle_active": { "name": "Läuft" }, "remote_control_enabled": { "name": "Fernsteuerung" }, "child_lock": { "name": "Kindersicherung" }, "power": { "name": "Betrieb" } },
+    "button": { "start": { "name": "Start" }, "pause": { "name": "Pause" }, "stop": { "name": "Stopp" } },
+    "select": { "program": { "name": "Programm" }, "temperature": { "name": "Temperatur" }, "spin_speed": { "name": "Schleuderdrehzahl" }, "rinse_count": { "name": "Spülgänge" }, "soil_level": { "name": "Verschmutzungsgrad" }, "application": { "name": "Anwendung" } },
+    "switch": { "power": { "name": "Betrieb" } },
+    "remote": { "remote": { "name": "Fernbedienung" } }
+  },
+  "exceptions": { "command_failed": { "message": "Das Gerät hat den Befehl abgelehnt: {error}" }, "command_unsupported": { "message": "Dieses Gerät meldet den Befehl nicht als verfügbar." } },
+  "issues": { "unknown_capabilities": { "title": "Neue lokale Samsung-Funktionen erkannt", "description": "{device} meldet {count} Ressourcen, die Samsung Local noch nicht abbildet. Lade die redigierte Diagnose herunter und hänge sie an eine Anfrage zur Geräteunterstützung an. Unbekannte Ressourcen werden nie als beliebige Schreibsteuerung angeboten." } }
+}

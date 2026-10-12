@@ -1,0 +1,12 @@
+{
+  "device": {
+    "id": "tv-8series-test",
+    "name": "Samsung 8 Series (43)",
+    "modelName": "UNKNOWN-8-SERIES-43",
+    "firmwareVersion": "T-NKLDEUC-2410.0",
+    "PowerState": "standby",
+    "TokenAuthSupport": "true",
+    "wifiMac": "02:00:00:00:00:02"
+  }
+}
+

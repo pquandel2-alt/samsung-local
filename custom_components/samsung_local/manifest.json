@@ -1,0 +1,35 @@
+{
+  "domain": "samsung_local",
+  "name": "Samsung Local",
+  "after_dependencies": ["ssdp"],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "dhcp": [
+    { "registered_devices": true },
+    { "hostname": "tizen*" }
+  ],
+  "documentation": "https://github.com/samsung-local/samsung-local",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/samsung-local/samsung-local/issues",
+  "loggers": ["samsungtvws", "smartthings_local"],
+  "requirements": [
+    "cbor2==5.9.0",
+    "samsungtvws[async]==3.0.6",
+    "smartthings-local==0.1.24"
+  ],
+  "ssdp": [
+    { "st": "urn:samsung.com:device:RemoteControlReceiver:1" },
+    { "st": "urn:samsung.com:service:MainTVAgent2:1" },
+    { "manufacturer": "Samsung" },
+    { "manufacturer": "Samsung Electronics" }
+  ],
+  "zeroconf": [
+    {
+      "properties": { "manufacturer": "samsung*" },
+      "type": "_airplay._tcp.local."
+    }
+  ],
+  "version": "0.1.0-beta.1"
+}

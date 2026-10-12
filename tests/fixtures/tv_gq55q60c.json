@@ -1,0 +1,12 @@
+{
+  "device": {
+    "id": "tv-q60c-test",
+    "name": "Samsung Q60C",
+    "modelName": "GQ55Q60CAUXZG",
+    "firmwareVersion": "mock-only",
+    "PowerState": "on",
+    "TokenAuthSupport": "true",
+    "wifiMac": "02:00:00:00:00:01"
+  }
+}
+

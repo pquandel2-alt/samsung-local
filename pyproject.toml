@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "samsung-local"
+version = "0.1.0b1"
+description = "Local Samsung device integration for Home Assistant"
+readme = "README.md"
+requires-python = ">=3.14.2"
+license = "MIT"
+authors = [{ name = "Samsung Local contributors" }]
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+  "aiohttp>=3.12",
+  "cbor2==5.9.0",
+  "cryptography>=45",
+  "pytest>=8.4",
+  "pytest-asyncio>=1.1",
+  "pytest-cov>=6.2",
+  "samsungtvws[async]==3.0.6",
+  "smartthings-local==0.1.24",
+]
+homeassistant-test = [
+  "pytest-homeassistant-custom-component==0.13.338",
+]
+dev = [
+  "mypy>=1.18",
+  "pip-audit>=2.9",
+  "ruff>=0.13",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "homeassistant: requires the Home Assistant test harness",
+  "hardware: requires an explicitly configured physical device",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "ASYNC", "LOG", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components.samsung_local", "tests"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_unreachable = true
+exclude = ["tests"]
+
+[[tool.mypy.overrides]]
+module = ["cbor2.*", "probatio.*", "samsungtvws.*", "smartthings_local.*"]
+ignore_missing_imports = true

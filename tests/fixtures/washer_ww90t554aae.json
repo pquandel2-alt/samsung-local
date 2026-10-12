@@ -1,0 +1,14 @@
+{
+  "identity": {"di": "11111111-2222-3333-4444-555555555555", "n": "Washer", "rt": ["oic.d.washer"]},
+  "platform": {"mnmn": "Samsung", "mnmo": "WW90T554AAE/S2"},
+  "resources": {
+    "/information/vs/0": {"x.com.samsung.da.modelNum": "WW90T554AAE/S2", "firmwareVersion": "WS.5.1.32"},
+    "/operational/state/vs/0": {"x.com.samsung.da.state": "Run", "x.com.samsung.da.progress": "Wash", "x.com.samsung.da.progressPercentage": "40", "x.com.samsung.da.remainingTime": "00:42:00"},
+    "/remotectrl/0": {"value": true},
+    "/course/vs/0": {"x.com.samsung.da.options": ["Course_1C"], "x.com.samsung.da.supportedOptions": ["Course_1C", "Course_1D"]},
+    "/wm/editcourse/vs/0": {"x.com.samsung.da.editCourseList": "EditCourseList_1C1D"},
+    "/washer/vs/0": {"x.com.samsung.da.waterTemperature": "40", "x.com.samsung.da.supportedWaterTemperature": ["20", "30", "40", "60"], "x.com.samsung.da.spinLevel": "1200", "x.com.samsung.da.supportedSpinLevel": ["0", "400", "800", "1200", "1400"], "x.com.samsung.da.rinseCycles": "2", "x.com.samsung.da.supportedRinseCycles": ["1", "2", "3", "4", "5"]},
+    "/energy/consumption/vs/0": {"x.com.samsung.da.instantaneousPower": "341", "x.com.samsung.da.cumulativePower": "12345"}
+  }
+}
+
