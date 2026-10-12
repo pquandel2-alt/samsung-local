@@ -21,7 +21,7 @@ Befehlssynchronisierung, WAN-blockierte Kernlogik, TV-Profilgrundsätze,
 Config-/Options-/Reconfigure-Flows, reales HA-Setup/Unload, Entity Registry und
 verschachtelte Diagnose-Redaktion.
 
-## Testumgebungen und ausstehende Validatoren
+## Testumgebungen und Repository-Validatoren
 
 Die Kernsuite lief zusätzlich auf dem vorhandenen Python 3.12.3 (32 Tests
 erfolgreich, 3 HA-Harness-Module erwartungsgemäß übersprungen).
@@ -30,10 +30,9 @@ verfügbare `pytest-homeassistant-custom-component==0.13.338` bindet
 Home Assistant 2026.6.2; der aktuelle HA-Core-API-Stand wurde zusätzlich im
 Quellcode untersucht, aber nicht als ausgeführter 2026.9-Lauf ausgegeben.
 
-Hassfest und HACS validation sind in GitHub Actions eingerichtet, wurden in
-dieser lokalen Umgebung aber nicht ausgeführt. Ihre Ergebnisse bleiben bis
-zum ersten CI-Lauf im veröffentlichten Repository offen; siehe
-`PUBLICATION.md`.
+Der veröffentlichte GitHub-CI-Lauf für Commit `86400e9` war erfolgreich:
+Quality, Home-Assistant-Integrationstests, Hassfest und HACS validation sind
+grün. Der separate Dependency-Security-Lauf war ebenfalls erfolgreich.
 
 Der vollständige HA-Test-Harness enthält durch seinen festen älteren Core-Pin
 inzwischen bekannte Advisories in Home-Assistant-Testabhängigkeiten. Der
