@@ -16,7 +16,7 @@
   "loggers": ["samsungtvws", "smartthings_local"],
   "requirements": [
     "cbor2==5.9.0",
-    "samsungtvws[async]==3.0.6",
+    "samsungtvws[async]>=3.0.6",
     "smartthings-local==0.1.24"
   ],
   "ssdp": [
@@ -25,11 +25,11 @@
     { "manufacturer": "Samsung" },
     { "manufacturer": "Samsung Electronics" }
   ],
+  "version": "0.1.0-beta.1",
   "zeroconf": [
     {
       "properties": { "manufacturer": "samsung*" },
       "type": "_airplay._tcp.local."
     }
-  ],
-  "version": "0.1.0-beta.1"
+  ]
 }
