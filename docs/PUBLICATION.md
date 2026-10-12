@@ -1,21 +1,19 @@
 # Veröffentlichung
 
-Der lokale Stand erzeugt keinen Release und führt keinen Push aus. Vor dem
-ersten öffentlichen Beta-Release sind folgende eigentümerabhängigen Angaben
-zu setzen:
+Zielrepository: `https://github.com/pquandel2-alt/samsung-local`.
 
-1. GitHub-Organisation oder Benutzerkonto und Repository `samsung-local`
-   anlegen.
-2. Die Platzhalter-URLs unter `documentation` und `issue_tracker` in
-   `custom_components/samsung_local/manifest.json` auf dieses Repository
-   ändern.
-3. Mindestens einen realen GitHub-Handle als `codeowners` eintragen.
-4. Git-Remote setzen, Branch Protection für `main` aktivieren und den
-   `develop`-Branch über einen Pull Request einbringen.
-5. CI, Hassfest, HACS validation und Dependency Audit erfolgreich abwarten.
-6. Hardwarestatus weiterhin höchstens `implemented_unverified` nennen, bis
+Für die erste öffentliche Beta gelten folgende Schritte:
+
+1. Repository `samsung-local` unter dem Eigentümer `pquandel2-alt` anlegen.
+2. Git-Remote setzen und den geprüften Initialstand auf `main` sowie
+   `develop` veröffentlichen. Nachfolgende Änderungen laufen über Pull
+   Requests von `develop` nach `main`.
+3. CI, Hassfest, HACS validation und Dependency Audit erfolgreich abwarten.
+4. Branch Protection für `main` aktivieren, sobald der initiale Stand
+   veröffentlicht ist.
+5. Hardwarestatus weiterhin höchstens `implemented_unverified` nennen, bis
    die dokumentierten realen Prüfungen bestanden sind.
-7. Den manuellen Workflow „Prepare release artifact“ mit der Manifest-Version
+6. Den manuellen Workflow „Prepare release artifact“ mit der Manifest-Version
    ausführen und das Artefakt prüfen. Er veröffentlicht absichtlich keinen Tag
    und kein Release.
 

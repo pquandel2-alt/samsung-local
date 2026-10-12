@@ -31,10 +31,9 @@ Home Assistant 2026.6.2; der aktuelle HA-Core-API-Stand wurde zusätzlich im
 Quellcode untersucht, aber nicht als ausgeführter 2026.9-Lauf ausgegeben.
 
 Hassfest und HACS validation sind in GitHub Actions eingerichtet, wurden in
-dieser lokalen Umgebung aber nicht ausgeführt. Zusätzlich fehlen noch der
-endgültige GitHub-Owner, ein Remote und ein echter `codeowners`-Eintrag. Die
-Validatoren bleiben deshalb bis zum ersten CI-Lauf im veröffentlichten
-Repository offen; siehe `PUBLICATION.md`.
+dieser lokalen Umgebung aber nicht ausgeführt. Ihre Ergebnisse bleiben bis
+zum ersten CI-Lauf im veröffentlichten Repository offen; siehe
+`PUBLICATION.md`.
 
 Der vollständige HA-Test-Harness enthält durch seinen festen älteren Core-Pin
 inzwischen bekannte Advisories in Home-Assistant-Testabhängigkeiten. Der

@@ -2,17 +2,17 @@
   "domain": "samsung_local",
   "name": "Samsung Local",
   "after_dependencies": ["ssdp"],
-  "codeowners": [],
+  "codeowners": ["@pquandel2-alt"],
   "config_flow": true,
   "dependencies": [],
   "dhcp": [
     { "registered_devices": true },
     { "hostname": "tizen*" }
   ],
-  "documentation": "https://github.com/samsung-local/samsung-local",
+  "documentation": "https://github.com/pquandel2-alt/samsung-local",
   "integration_type": "device",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/samsung-local/samsung-local/issues",
+  "issue_tracker": "https://github.com/pquandel2-alt/samsung-local/issues",
   "loggers": ["samsungtvws", "smartthings_local"],
   "requirements": [
     "cbor2==5.9.0",
