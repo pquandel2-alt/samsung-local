@@ -99,6 +99,7 @@ class TizenTvAdapter(SamsungDeviceAdapter):
         token: str | None = None,
         mac_address: str | None = None,
         enable_wol: bool = False,
+        allow_pairing: bool = False,
         token_callback: Callable[[str], None] | None = None,
     ) -> None:
         super().__init__()
@@ -107,6 +108,7 @@ class TizenTvAdapter(SamsungDeviceAdapter):
         self.token = token
         self.mac_address = _normalize_mac(mac_address)
         self.enable_wol = enable_wol
+        self.allow_pairing = allow_pairing
         self._session = session
         self._token_callback = token_callback
         self._remote: SamsungTVWSAsyncRemote | None = None
@@ -140,6 +142,17 @@ class TizenTvAdapter(SamsungDeviceAdapter):
                 info = await self._device_info_for_port(port)
                 if info is None:
                     continue
+                device = info.get("device")
+                token_auth = (
+                    isinstance(device, dict)
+                    and str(device.get("TokenAuthSupport", "")).lower() == "true"
+                )
+                if port == 8002 and token_auth and not self.token and not self.allow_pairing:
+                    self._connection = ConnectionStatus.AUTHENTICATION_FAILED
+                    raise AuthenticationError(
+                        "TV token is missing; interactive reauthentication is required"
+                    )
+                supplied_token = self.token
                 remote = SamsungTVWSAsyncRemote(
                     host=self.host,
                     port=port,
@@ -166,10 +179,30 @@ class TizenTvAdapter(SamsungDeviceAdapter):
                     await remote.close()
                     continue
                 self.port = port
-                self._remote = remote
                 self._raw_info = info
-                self.token = remote.token or self.token
-                if self.token and self._token_callback:
+                received_token = remote.token or supplied_token
+                if port == 8002 and token_auth and not received_token:
+                    await remote.close()
+                    self._connection = ConnectionStatus.AUTHENTICATION_FAILED
+                    raise AuthenticationError("TV pairing completed without a reusable token")
+                if (
+                    not self.allow_pairing
+                    and supplied_token is not None
+                    and received_token != supplied_token
+                ):
+                    await remote.close()
+                    self._connection = ConnectionStatus.AUTHENTICATION_FAILED
+                    raise AuthenticationError(
+                        "TV replaced its stored token; interactive reauthentication is required"
+                    )
+                self._remote = remote
+                self.token = received_token
+                if (
+                    self.allow_pairing
+                    and self.token
+                    and self.token != supplied_token
+                    and self._token_callback
+                ):
                     self._token_callback(self.token)
                 self._update_info()
                 self._connection = ConnectionStatus.CONNECTED

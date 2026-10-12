@@ -1,4 +1,4 @@
-# Testbericht 0.1.0-beta.2
+# Testbericht 0.1.0-beta.3
 
 Datum: 12. Oktober 2026
 
@@ -9,22 +9,23 @@ Datum: 12. Oktober 2026
 | `python -m compileall` | erfolgreich |
 | `ruff check custom_components tests` | erfolgreich |
 | `mypy custom_components/samsung_local` (strict) | erfolgreich, 38 Dateien |
-| `pytest -q` (Python 3.14.2 + echte HA-Harness) | 44 erfolgreich, 0 fehlgeschlagen |
+| `pytest -q` (Python 3.14.2 + echte HA-Harness) | 46 erfolgreich, 0 fehlgeschlagen |
 | Coverage | 70 % gesamt; Diagnostics 90 %, Coordinator 82 %, Connection Manager 79 % |
 | `pip-audit --local` im Runtime-/Unit-Test-Satz | keine bekannten Schwachstellen |
 | JSON-Parsing Manifest/Strings/Übersetzungen | erfolgreich |
 
-Die 44 Tests umfassen Capability-Mapping, Phantom-Unterdrückung,
+Die 46 Tests umfassen Capability-Mapping, Phantom-Unterdrückung,
 Firmware-Add/Remove, Zertifikats-/PSK-/Tokenvalidierung,
 Completion-Deduplizierung, Reconnect-Backoff, WLAN-Ausfall,
 Befehlssynchronisierung, WAN-blockierte Kernlogik, TV-Profilgrundsätze,
 Config-/Options-/Reconfigure-Flows, reales HA-Setup/Unload, Entity Registry und
 verschachtelte Diagnose-Redaktion. SSDP-Mehrfachantworten und der
-Standby-Pairingfehler besitzen eigene Regressionstests.
+Standby-Pairingfehler, fehlende Laufzeit-Tokens und unerwartete Tokenwechsel
+besitzen eigene Regressionstests.
 
 ## Testumgebungen und Repository-Validatoren
 
-Die Kernsuite lief zusätzlich auf dem vorhandenen Python 3.12.3 (33 Tests
+Die Kernsuite lief zusätzlich auf dem vorhandenen Python 3.12.3 (35 Tests
 erfolgreich, 3 HA-Harness-Module erwartungsgemäß übersprungen).
 Für die Integrationstests wurde CPython 3.14.2 installiert. Die aktuell
 verfügbare `pytest-homeassistant-custom-component==0.13.338` bindet

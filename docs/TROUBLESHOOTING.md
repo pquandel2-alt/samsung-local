@@ -24,6 +24,21 @@ Freigabedialog. In den TV-Einstellungen die IP-/lokale Fernsteuerung bzw. den
 Geräteverbindungsmanager aktivieren, Samsung Local erneut senden und den
 Dialog direkt am Fernseher erlauben.
 
+## Der Fernseher fragt wiederholt nach Zugriffsfreigabe
+
+Samsung Local darf interaktives Pairing nur im Einrichtungs- oder Reauth-Flow
+starten. Ab `0.1.0-beta.3` öffnet ein Hintergrund-Refresh ohne gespeicherten
+Token keinen Pairing-Kanal mehr, sondern fordert kontrolliert eine erneute
+Authentifizierung an.
+
+Am Fernseher zusätzlich unter **Einstellungen > Allgemein > Netzwerk >
+Experteneinstellungen > Geräteverbindungsmanager** (Bezeichnungen variieren je
+nach Firmware) die **Zugriffsbenachrichtigung** auf **Nur beim ersten Mal**
+stellen. Alte oder doppelte Einträge für Home Assistant/Samsung Local in der
+Geräteliste entfernen und anschließend genau einmal über den Reauth-Dialog neu
+koppeln. Die Einstellung **Immer fragen** erzeugt bei jeder legitimen
+Wiederverbindung erneut einen Dialog, auch wenn die Integration korrekt arbeitet.
+
 ## Authentifizierung abgelehnt
 
 Beim TV den Eintrag im Geräteverbindungsmanager löschen und Reauth ausführen.

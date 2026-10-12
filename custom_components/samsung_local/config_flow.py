@@ -158,6 +158,7 @@ class SamsungLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 async_get_clientsession(self.hass),
                 port=self._discovery.port,
                 token=(self._reauth_entry.data.get(CONF_TOKEN) if self._reauth_entry else None),
+                allow_pairing=True,
             )
             try:
                 await adapter.connect()

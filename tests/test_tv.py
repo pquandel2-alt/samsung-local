@@ -12,6 +12,7 @@ from custom_components.samsung_local.adapters.tizen_tv import (
     _normalize_mac,
 )
 from custom_components.samsung_local.exceptions import (
+    AuthenticationError,
     CommandNotSupportedError,
     InvalidCommandError,
 )
@@ -66,6 +67,7 @@ async def test_tizen_pairing_state_apps_and_cleanup(monkeypatch) -> None:
         "192.0.2.80",
         object(),  # type: ignore[arg-type]
         port=8002,
+        allow_pairing=True,
         token_callback=tokens.append,
     )
     on_payload = {
@@ -103,3 +105,54 @@ async def test_tizen_pairing_state_apps_and_cleanup(monkeypatch) -> None:
 
     await adapter.disconnect()
     assert FakeRemote.instances[0].closed
+
+
+async def test_runtime_never_starts_pairing_without_stored_token(monkeypatch) -> None:
+    """A background refresh must not cause a consent prompt on the TV."""
+    FakeRemote.instances.clear()
+    monkeypatch.setattr(
+        "custom_components.samsung_local.adapters.tizen_tv.SamsungTVWSAsyncRemote",
+        FakeRemote,
+    )
+    adapter = TizenTvAdapter("192.0.2.81", object(), port=8002)  # type: ignore[arg-type]
+    adapter._device_info_for_port = AsyncMock(  # type: ignore[method-assign]
+        return_value={"device": {"TokenAuthSupport": "true"}}
+    )
+
+    with pytest.raises(AuthenticationError, match="token is missing"):
+        await adapter.connect()
+
+    assert FakeRemote.instances == []
+    assert adapter._connection is ConnectionStatus.AUTHENTICATION_FAILED
+
+
+async def test_runtime_rejects_unexpected_token_replacement(monkeypatch) -> None:
+    """A reconnect cannot silently turn into recurring interactive pairing."""
+
+    class ReplacingRemote(FakeRemote):
+        def __init__(self, **kwargs) -> None:
+            super().__init__(**kwargs)
+            self.token = "replacement-token"
+
+    ReplacingRemote.instances.clear()
+    monkeypatch.setattr(
+        "custom_components.samsung_local.adapters.tizen_tv.SamsungTVWSAsyncRemote",
+        ReplacingRemote,
+    )
+    saved: list[str] = []
+    adapter = TizenTvAdapter(
+        "192.0.2.82",
+        object(),  # type: ignore[arg-type]
+        port=8002,
+        token="stored-token",
+        token_callback=saved.append,
+    )
+    adapter._device_info_for_port = AsyncMock(  # type: ignore[method-assign]
+        return_value={"device": {"TokenAuthSupport": "true"}}
+    )
+
+    with pytest.raises(AuthenticationError, match="replaced its stored token"):
+        await adapter.connect()
+
+    assert saved == []
+    assert ReplacingRemote.instances[0].closed

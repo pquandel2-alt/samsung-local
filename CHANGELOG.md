@@ -9,6 +9,18 @@ Projekt verwendet [Semantic Versioning](https://semver.org/).
 - Aufnahme in den HACS-Standardkatalog steht aus; die Installation als
   benutzerdefiniertes HACS-Repository ist vorbereitet.
 
+## [0.1.0-beta.3] - 2026-10-12
+
+### Fixed
+
+- Automatische Statusaktualisierungen dürfen kein interaktives TV-Pairing mehr
+  starten. Fehlt der gespeicherte Token oder ersetzt der Fernseher ihn
+  unerwartet, wechselt die Integration kontrolliert in die Reauthentifizierung.
+- Ein Pairing eines tokenpflichtigen Fernsehers gilt nur noch dann als
+  erfolgreich, wenn ein wiederverwendbarer Token geliefert wurde.
+- Die Fehlerbehebung dokumentiert Samsungs Einstellung
+  „Zugriffsbenachrichtigung – Nur beim ersten Mal“.
+
 ## [0.1.0-beta.2] - 2026-10-12
 
 ### Fixed
@@ -35,6 +47,7 @@ Projekt verwendet [Semantic Versioning](https://semver.org/).
 - Deutsche und englische Oberfläche, HACS-Metadaten, CI-Konfiguration,
   Tests, Sicherheits-, Installations-, Migrations- und Hardwaretestdokumente.
 
-[Unreleased]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.2...HEAD
+[Unreleased]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.3...HEAD
+[0.1.0-beta.3]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.1...v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/pquandel2-alt/samsung-local/releases/tag/v0.1.0-beta.1
