@@ -9,7 +9,7 @@
       },
       "pair": {
         "title": "Pair the TV",
-        "description": "Select Submit, then allow Samsung Local on {host} using the TV prompt."
+        "description": "Fully turn on the TV first. Select Submit, then allow Samsung Local on {host} using the prompt displayed on the TV. Pairing cannot be completed while the TV is in standby."
       },
       "ocf_auth": {
         "title": "Authenticate the appliance",
@@ -50,6 +50,7 @@
       "invalid_host": "Enter one valid IP address or hostname.",
       "invalid_auth": "The supplied local credentials are invalid.",
       "auth_rejected": "The device rejected local authentication.",
+      "tv_not_ready": "The TV pairing connection failed. Fully turn on the TV, enable IP/local remote access in its connection settings, then submit again and accept the TV prompt.",
       "public_identity_unavailable": "The public identity could not be obtained. Use manual or imported credentials for offline setup.",
       "legacy_not_supported": "This legacy appliance family is not safely mapped."
     },

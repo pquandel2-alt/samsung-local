@@ -22,10 +22,16 @@
   "ssdp": [
     { "st": "urn:samsung.com:device:RemoteControlReceiver:1" },
     { "st": "urn:samsung.com:service:MainTVAgent2:1" },
-    { "manufacturer": "Samsung" },
-    { "manufacturer": "Samsung Electronics" }
+    {
+      "manufacturer": "Samsung",
+      "st": "urn:schemas-upnp-org:service:RenderingControl:1"
+    },
+    {
+      "manufacturer": "Samsung Electronics",
+      "st": "urn:schemas-upnp-org:service:RenderingControl:1"
+    }
   ],
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "zeroconf": [
     {
       "properties": { "manufacturer": "samsung*" },

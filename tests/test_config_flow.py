@@ -13,6 +13,7 @@ if getattr(homeassistant, "__file__", None) is None:
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.service_info.ssdp import SsdpServiceInfo
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.samsung_local.const import (
@@ -24,7 +25,7 @@ from custom_components.samsung_local.const import (
     DOMAIN,
     PROTOCOL_TIZEN,
 )
-from custom_components.samsung_local.exceptions import AuthenticationError
+from custom_components.samsung_local.exceptions import AuthenticationError, CannotConnectError
 from custom_components.samsung_local.models import (
     Capability,
     DeviceCategory,
@@ -36,6 +37,38 @@ from custom_components.samsung_local.models import (
 from tests.simulated import SimulatedSamsungAdapter
 
 pytestmark = pytest.mark.homeassistant
+
+
+async def test_ssdp_discovery_is_deduplicated_by_host(
+    hass: HomeAssistant, enable_custom_integrations: None
+) -> None:
+    first_info = SsdpServiceInfo(
+        ssdp_usn="uuid:first::urn:samsung.com:device:RemoteControlReceiver:1",
+        ssdp_st="urn:samsung.com:device:RemoteControlReceiver:1",
+        upnp={},
+        ssdp_location="http://192.0.2.90:9197/root.xml",
+    )
+    first = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": config_entries.SOURCE_SSDP},
+        data=first_info,
+    )
+    assert first["type"] is data_entry_flow.FlowResultType.FORM
+    assert first["step_id"] == "discovery_confirm"
+
+    second_info = SsdpServiceInfo(
+        ssdp_usn="uuid:second::urn:samsung.com:service:MainTVAgent2:1",
+        ssdp_st="urn:samsung.com:service:MainTVAgent2:1",
+        upnp={},
+        ssdp_location="http://192.0.2.90:9197/another.xml",
+    )
+    second = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": config_entries.SOURCE_SSDP},
+        data=second_info,
+    )
+    assert second["type"] is data_entry_flow.FlowResultType.ABORT
+    assert second["reason"] == "already_in_progress"
 
 
 async def test_tv_config_flow_pairs_confirms_and_closes(
@@ -201,6 +234,41 @@ async def test_pairing_rejection_is_reported_and_session_is_closed(
     assert result["step_id"] == "pair"
     assert result["errors"]["base"] == "auth_rejected"
     disconnect.assert_awaited_once()
+
+
+async def test_tv_standby_pairing_failure_has_actionable_error(
+    hass: HomeAssistant, enable_custom_integrations: None
+) -> None:
+    discovered = DiscoveryResult(
+        host="192.0.2.61",
+        protocol=Protocol.TIZEN,
+        port=8002,
+        name="Samsung TV",
+        category=DeviceCategory.TV,
+    )
+    with patch(
+        "custom_components.samsung_local.config_flow.async_discover_host",
+        AsyncMock(return_value=[discovered]),
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+            data={CONF_HOST: discovered.host, CONF_PROTOCOL: PROTOCOL_TIZEN},
+        )
+    with (
+        patch(
+            "custom_components.samsung_local.config_flow.TizenTvAdapter.connect",
+            AsyncMock(side_effect=CannotConnectError("standby")),
+        ),
+        patch(
+            "custom_components.samsung_local.config_flow.TizenTvAdapter.disconnect",
+            AsyncMock(),
+        ),
+    ):
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is data_entry_flow.FlowResultType.FORM
+    assert result["step_id"] == "pair"
+    assert result["errors"]["base"] == "tv_not_ready"
 
 
 async def test_reconfigure_updates_only_a_verified_address(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Self
 
 try:
     import probatio as vol
@@ -12,6 +12,7 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_HOST
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from homeassistant.helpers.service_info.ssdp import SsdpServiceInfo
@@ -100,6 +101,18 @@ class SamsungLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._title = "Samsung Local"
         self._reauth_entry: config_entries.ConfigEntry | None = None
 
+    def is_matching(self, other_flow: Self) -> bool:
+        """Match discovery flows for the same network host."""
+        other_host = getattr(other_flow, "_host", "")
+        return bool(self._host and self._host.casefold() == other_host.casefold())
+
+    @callback
+    def _async_abort_duplicate_discovery(self) -> None:
+        """Keep one discovery card per host across SSDP, DHCP and mDNS."""
+        self._async_abort_entries_match({CONF_HOST: self._host})
+        if self.hass.config_entries.flow.async_has_matching_flow(self):
+            raise AbortFlow("already_in_progress")
+
     @staticmethod
     @callback
     def async_get_options_flow(
@@ -153,7 +166,7 @@ class SamsungLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except AuthenticationError:
                 errors["base"] = "auth_rejected"
             except CannotConnectError:
-                errors["base"] = "cannot_connect"
+                errors["base"] = "tv_not_ready"
             else:
                 self._pending = {
                     CONF_HOST: self._host,
@@ -334,6 +347,7 @@ class SamsungLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     entry, data={**entry.data, CONF_HOST: self._host}
                 )
                 return self.async_abort(reason="already_configured")
+        self._async_abort_duplicate_discovery()
         return await self.async_step_discovery_confirm()
 
     async def async_step_ssdp(self, discovery_info: SsdpServiceInfo) -> ConfigFlowResult:
@@ -342,10 +356,12 @@ class SamsungLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not host:
             return self.async_abort(reason="invalid_host")
         self._host = host
+        self._async_abort_duplicate_discovery()
         return await self.async_step_discovery_confirm()
 
     async def async_step_zeroconf(self, discovery_info: ZeroconfServiceInfo) -> ConfigFlowResult:
-        self._host = discovery_info.host
+        self._host = str(discovery_info.ip_address)
+        self._async_abort_duplicate_discovery()
         return await self.async_step_discovery_confirm()
 
     async def async_step_discovery_confirm(

@@ -9,6 +9,21 @@
 - bei OCF UDP 49152–49160 bzw. den beworbenen Port und 5684 im LAN prüfen;
 - bei Tizen TCP 8001/8002, bei Legacy TCP 8888 prüfen.
 
+## Derselbe Fernseher wird mehrfach gefunden
+
+Auf `0.1.0-beta.2` oder neuer aktualisieren und Home Assistant neu starten.
+Ältere Versionen reagierten auf mehrere SSDP-Dienste desselben Fernsehers.
+Offene alte Discovery-Karten können nach dem Neustart verworfen werden; die
+neue Erkennung legt pro Host nur noch einen Einrichtungsdialog an.
+
+## TV-Pairing schlägt fehl
+
+Der Fernseher muss für die einmalige Kopplung vollständig eingeschaltet sein;
+eine im Standby erreichbare REST-Antwort genügt nicht für den WebSocket-
+Freigabedialog. In den TV-Einstellungen die IP-/lokale Fernsteuerung bzw. den
+Geräteverbindungsmanager aktivieren, Samsung Local erneut senden und den
+Dialog direkt am Fernseher erlauben.
+
 ## Authentifizierung abgelehnt
 
 Beim TV den Eintrag im Geräteverbindungsmanager löschen und Reauth ausführen.

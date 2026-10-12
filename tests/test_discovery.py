@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from custom_components.samsung_local.discovery import _valid_host, host_from_discovery_url
@@ -25,3 +28,12 @@ def test_manual_discovery_rejects_ranges_and_urls(host: str) -> None:
 
 def test_manual_discovery_accepts_single_host() -> None:
     assert _valid_host(" 192.0.2.20 ") == "192.0.2.20"
+
+
+def test_ssdp_manufacturer_matchers_are_service_scoped() -> None:
+    manifest = json.loads(
+        (Path(__file__).parents[1] / "custom_components/samsung_local/manifest.json").read_text()
+    )
+    for matcher in manifest["ssdp"]:
+        if "manufacturer" in matcher:
+            assert matcher["st"] == "urn:schemas-upnp-org:service:RenderingControl:1"
