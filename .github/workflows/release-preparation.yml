@@ -34,7 +34,7 @@ jobs:
           PY
       - name: Build HACS zip
         run: cd custom_components/samsung_local && zip -r ../../samsung_local.zip .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: samsung-local-${{ inputs.version }}
           path: samsung_local.zip
