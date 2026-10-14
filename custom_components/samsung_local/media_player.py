@@ -11,6 +11,7 @@ from homeassistant.components.media_player.const import (
     MediaType,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import SamsungLocalConfigEntry
@@ -55,6 +56,12 @@ class SamsungLocalMediaPlayer(SamsungLocalEntity, MediaPlayerEntity):
         | MediaPlayerEntityFeature.NEXT_TRACK
         | MediaPlayerEntityFeature.PREVIOUS_TRACK
     )
+
+    @property
+    def available(self) -> bool:
+        """Keep confirmed WOL control callable while deep standby is opaque."""
+        capability = self.capability
+        return super().available or bool(capability and capability.attributes.get("can_power_on"))
 
     @property
     def supported_features(self) -> MediaPlayerEntityFeature:
@@ -118,11 +125,14 @@ class SamsungLocalMediaPlayer(SamsungLocalEntity, MediaPlayerEntity):
         self, media_type: MediaType | str, media_id: str, **kwargs: Any
     ) -> None:
         if media_type == MediaType.APP:
-            await self._async_command("launch_app", value=media_id)
+            await self._async_command("launch_app", value=media_id, turn_on=True)
             return
         if media_type == MediaType.CHANNEL and media_id.isdigit():
             for digit in media_id:
                 await self._async_command("remote_key", value=f"KEY_{digit}")
             await self._async_command("remote_key", value="KEY_ENTER")
             return
-        await self._async_command("launch_app", value=media_id)
+        raise HomeAssistantError(
+            translation_domain="samsung_local",
+            translation_key="unsupported_media_type",
+        )

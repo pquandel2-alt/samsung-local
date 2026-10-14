@@ -64,6 +64,22 @@ asynchronen modernen Tizen-Klassen. Die Bibliothek wird unverändert als
 dynamisches Python-Paket installiert; `THIRD_PARTY_NOTICES.md` nennt Lizenz und
 Urheber.
 
+Für App-Starts stellt 3.0.6 `ChannelEmitCommand.launch_app` mit
+`DEEP_LINK`/`NATIVE_LAUNCH` sowie `rest_app_run`, `rest_app_status` und
+`app_list` bereit. Die App-Liste ist auf verschiedenen neueren Tizen-Versionen
+nicht mehr verfügbar; bekannte IDs sind außerdem regions- und
+firmwareabhängig. Samsung Local kombiniert deshalb begrenzte bekannte
+Kandidaten mit erkannter und manueller gerätespezifischer Konfiguration. Ein
+Kandidat wird nicht als installierte App ausgegeben. Ein gesendeter Start wird
+getrennt von Endpunktbestätigung und erkanntem Aktivstatus diagnostiziert.
+
+Untersuchte Kandidaten aus der Upstream-Dokumentation: Netflix
+`11101200001`/`3201907018807`, Prime Video
+`3201512006785`/`3201910019365`, YouTube `111299001912`, Plex
+`3201512006963` und Spotify `3201606009684`. Weitere mitgelieferte Kandidaten
+sind ausdrücklich unbestätigt und müssen am jeweiligen TV getestet oder
+überschrieben werden.
+
 ## Offizielle Home-Assistant-Integration `samsungtv`
 
 - Quellstand: Home Assistant Core Commit
@@ -100,4 +116,3 @@ ein Kandidat für eine spätere, getrennte Adaptererweiterung.
 4. Wake-on-LAN hängt von TV-Einstellung, LAN/WLAN und Broadcast-Routing ab.
 5. Samsung-Firmware kann Ressourcen hinzufügen oder entfernen; deshalb
    Live-Discovery, stabile Keys und Repairs statt Modelltemplates.
-

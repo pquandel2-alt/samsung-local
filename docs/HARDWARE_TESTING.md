@@ -40,11 +40,23 @@ Für beide TVs separat:
 1. Pairing erlauben, HA neu starten, kein zweiter Consent-Dialog erwartet.
 2. Gerätinfo und echte Modellnummer prüfen.
 3. Navigation, Lautstärke, Mute, Play/Pause/Stop und HDMI einzeln testen.
-4. Nur Apps testen, die in der gelieferten Liste stehen.
+4. Automatisch erkannte Apps testen. Liefert der TV keine Liste, Netflix und
+   Prime mit jeweils einer begrenzten Kandidaten-ID im Options Flow testen;
+   DEEP_LINK, NATIVE_LAUNCH und REST nur einzeln und dokumentiert wechseln.
 5. Ausschalten: Standby muss durch Geräteantwort bestätigt werden.
 6. LAN-Verbindung bei eingeschaltetem TV trennen: Zustand muss `unavailable`/
    getrennt statt fälschlich `off` werden.
 7. Wake-on-LAN mit Ethernet/WLAN und nach 1, 10 und 30 Minuten Standby prüfen.
+8. `media_player.turn_on` ausführen: Es darf erst nach erreichbarem REST und
+   WebSocket `on` ergeben und bei Nichtreaktion nur begrenzt versuchen.
+9. `samsung_local.launch_app`, `media_player.select_source` und
+   `media_player.play_media` für dieselbe App vergleichen.
+10. App-Start aus mindestens zehn Minuten Standby prüfen: WOL → Reconnect →
+    genau ein Start. Zwei schnelle verschiedene App-Aufträge ebenfalls testen.
+
+Für den GU43TU8079UXZG ist der reine Magic-Packet-Test über WLAN bereits vom
+Benutzer bestätigt. Die Schritte 8–10 bleiben trotzdem offen. Beim Q60C ist
+auch Schritt 7 noch offen. Reale MAC-Adressen gehören nicht in Berichte.
 
 ## WAN-Sperrtest
 

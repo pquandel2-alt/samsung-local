@@ -6,7 +6,7 @@ import pytest
 
 from custom_components.samsung_local.connection.manager import ConnectionManager
 from custom_components.samsung_local.connection.reconnect import BackoffPolicy
-from custom_components.samsung_local.exceptions import CannotConnectError
+from custom_components.samsung_local.exceptions import CannotConnectError, CommandRejectedError
 from custom_components.samsung_local.models import (
     Capability,
     DeviceCategory,
@@ -49,3 +49,46 @@ async def test_simultaneous_commands_are_serialized() -> None:
     await asyncio.gather(*(manager.async_execute("start", value=index) for index in range(5)))
     assert [kwargs["value"] for _, kwargs in device.commands] == list(range(5))
     assert device.maximum_parallel_commands == 1
+
+
+async def test_disabled_auto_reconnect_does_not_reopen_a_lost_session() -> None:
+    device = adapter()
+    manager = ConnectionManager(device, auto_reconnect=False)
+    await manager.async_connect()
+    await manager.async_mark_disconnected()
+
+    with pytest.raises(CannotConnectError, match="automatic reconnect is disabled"):
+        await manager.async_update()
+
+
+async def test_newest_app_request_supersedes_an_older_queued_request() -> None:
+    device = adapter()
+    device.states[0]["launch_app"] = Capability("launch_app", EntityPlatform.BUTTON, writable=True)
+    manager = ConnectionManager(device)
+    await manager.async_connect()
+    first_started = asyncio.Event()
+    release_first = asyncio.Event()
+    original_execute = device.execute_command
+
+    async def delayed_execute(command: str, **kwargs: object) -> None:
+        if command == "launch_app" and not first_started.is_set():
+            first_started.set()
+            await release_first.wait()
+        await original_execute(command, **kwargs)
+
+    device.execute_command = delayed_execute  # type: ignore[method-assign]
+    first = asyncio.create_task(manager.async_execute("launch_app", value="first"))
+    await first_started.wait()
+    stale = asyncio.create_task(manager.async_execute("launch_app", value="stale"))
+    await asyncio.sleep(0)
+    newest = asyncio.create_task(manager.async_execute("launch_app", value="newest"))
+    release_first.set()
+
+    await first
+    with pytest.raises(CommandRejectedError, match="superseded"):
+        await stale
+    await newest
+    assert [kwargs["value"] for command, kwargs in device.commands if command == "launch_app"] == [
+        "first",
+        "newest",
+    ]

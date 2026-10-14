@@ -45,6 +45,10 @@ class SamsungDeviceAdapter(ABC):
     async def execute_command(self, command: str, **kwargs: Any) -> None:
         """Execute one validated local command."""
 
+    def get_fallback_state(self) -> DeviceSnapshot | None:
+        """Return a safe startup snapshot, or none when live setup is mandatory."""
+        return None
+
     async def diagnostics(self) -> dict[str, Any]:
         """Return protocol diagnostics without credentials."""
         return {}

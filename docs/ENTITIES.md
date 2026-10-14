@@ -16,7 +16,7 @@ und, wo vorhanden, eine vom Gerät gemeldete Optionsliste.
 | `remote_control_enabled`, `child_lock` | binary_sensor | OCF/vendor resources | nein |
 | `energy_consumption`, `power_consumption` | sensor | lokaler Zähler | nein |
 | `media_player`, `remote` | TV | Tizen WS/REST | ja |
-| `application` | select | vom TV gelieferte App-Liste | ja |
+| `application` | select | erkannte/manuell konfigurierte/bestätigte App | ja |
 
 Programmwerte können rohe Gerätecodes wie `1C` sein. Ohne gesicherte,
 tabellenspezifische Übersetzung ist der rohe Code ehrlicher als ein erfundener
@@ -27,3 +27,10 @@ eine Capability entfernt, wird ihre bestehende Entität unverfügbar. Wenn sie
 eine hinzufügt, kann die geladene Plattform sie ergänzen; unbekannte Ressourcen
 erzeugen einen Repair, aber keine generische Schreibentität.
 
+Der TV-`media_player` bietet `turn_on` nur mit gültig konfiguriertem
+Wake-on-LAN an. Erkannte oder manuell konfigurierte Apps erscheinen neben
+HDMI-Quellen in `source_list`; Namenskollisionen erhalten ein `App:`-Präfix.
+`media_player.play_media` akzeptiert `media_content_type: app`. Alle drei Wege
+(`select_source`, `play_media`, `samsung_local.launch_app`) verwenden denselben
+internen Launcher und erfinden keine aktive Quelle, wenn der TV sie nicht
+zurückmeldet.

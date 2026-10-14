@@ -7,14 +7,18 @@ CoAP und DTLS. Für unterstützte Funktionen gibt es im laufenden Betrieb
 keine SmartThings-Cloud-Abfrage, kein Samsung-Konto und keinen API-Token.
 
 > **Status: 0.1.0 Beta.** Die Softwarearchitektur und simulierten Geräte sind
-> getestet. Die drei Zielgeräte wurden noch nicht physisch geprüft. Kein
-> Eintrag in der Kompatibilitätsmatrix ist deshalb `confirmed`.
+> getestet. Wake-on-LAN wurde vom Benutzer am GU43TU8079UXZG über dessen
+> WLAN-MAC bestätigt; der neue Samsung-Local-Gesamtpfad und alle App-Starts
+> benötigen noch den dokumentierten Hardwaretest.
 
 ## Funktionen
 
 - UI-Konfiguration, automatische DHCP/SSDP/mDNS-Erkennung und manuelle IP
 - Tizen-Pairing mit dauerhaft wiederverwendetem lokalem TV-Token
+- bestätigtes, begrenztes Wake-on-LAN mit MAC, Broadcast, Timeout und Retries
 - Tizen `media_player` und `remote`, HDMI-/App-Auswahl, Navigation und Wiedergabe
+- gerätespezifische App-Registry, Aliasnamen sowie lokaler App-Start über
+  `select_source`, `play_media` und `samsung_local.launch_app`
 - OCF/DTLS mit Zertifikat oder bereits autorisiertem PSK
 - lokale Waschmaschinenzustände, Restzeit, Ende, Programme und Einstellungen
 - Start/Pause/Stopp nur bei nachgewiesener Ressource und erfüllten Schutzbedingungen
@@ -67,9 +71,11 @@ Ausführlich: [Installation](docs/INSTALLATION.md) und
 2. Bei Bedarf „IP-Fernbedienung“/„Geräteverbindungsmanager“ am TV aktivieren.
 3. IP eintragen oder das gefundene Gerät öffnen.
 4. „Koppeln“ absenden und den Dialog am Fernseher erlauben.
-5. Wake-on-LAN nur aktivieren, wenn eine gültige MAC vorliegt und Broadcasts
-   den Fernseher erreichen. Ein fehlgeschlagener Socket gilt nicht als Beweis
-   für Standby.
+5. Unter Konfigurieren → Optionen Wake-on-LAN mit MAC, Broadcast, Zeitlimit
+   und Versuchen einrichten und über „Wake-on-LAN testen“ prüfen. Ein
+   gesendetes Paket allein gilt nicht als eingeschalteter Fernseher.
+6. Apps nach Möglichkeit automatisch erkennen lassen oder App-ID, Startart
+   und Aliase pro Fernseher hinzufügen und über „App testen“ verifizieren.
 
 ### Haushaltsgerät
 
@@ -96,6 +102,21 @@ Nur vorhandene Felder werden angelegt. Möglich sind unter anderem:
 - `button`: Start, Pause, Stopp
 - `switch`: nur bestätigte beschreibbare Funktionen
 - `media_player` und `remote`: Tizen-TV
+
+Apps lassen sich zusätzlich per normaler Home-Assistant-Aktion starten:
+
+```yaml
+action: samsung_local.launch_app
+target:
+  entity_id: media_player.schlafzimmer_tv
+data:
+  app: netflix
+  turn_on: true
+```
+
+Der Fernseher wird bei Bedarf erst per Wake-on-LAN geweckt und lokal
+bestätigt. Details und Sprachassistent-Beispiele stehen in der
+[Homeintent-Anleitung](docs/HOMEINTENT_INTEGRATION.md).
 
 Bild- und Tonmodus, Helligkeit oder aktive Quelle werden **nicht** erfunden:
 Sie erscheinen erst, wenn ein lokaler les- und gegebenenfalls beschreibbarer
@@ -200,7 +221,9 @@ Samsung-Server kontaktieren. Samsung Local blockiert diesen Verkehr nicht.
   nicht implementiert; ein Token muss importiert werden.
 - Bild-/Tonmodus und exakte TV-Lautstärke benötigen einen nachgewiesenen lokalen
   Status-/Schreibkanal und sind daher derzeit nicht als eigene Entität aktiv.
-- Apps werden nur angeboten, wenn der TV seine installierte App-Liste liefert.
+- Die automatische App-Liste ist auf manchen Tizen-Versionen gesperrt. Dann
+  müssen App-IDs pro TV manuell hinzugefügt und auf echter Hardware getestet
+  werden. Bekannte IDs sind Kandidaten, kein Installationsnachweis.
 - Haushaltsgeräte können nur eine lokale Session zulassen; eine zweite lokale
   Integration kann Verbindungen verdrängen.
 

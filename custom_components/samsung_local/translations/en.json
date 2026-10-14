@@ -13,7 +13,18 @@
     "error": { "cannot_connect": "The device did not answer a supported local protocol.", "invalid_host": "Enter one valid IP address or hostname.", "invalid_auth": "The supplied local credentials are invalid.", "auth_rejected": "The device rejected local authentication.", "tv_not_ready": "The TV pairing connection failed. Fully turn on the TV, enable IP/local remote access in its connection settings, then submit again and accept the TV prompt.", "public_identity_unavailable": "The public identity could not be obtained. Use manual or imported credentials for offline setup.", "legacy_not_supported": "This legacy appliance family is not safely mapped." },
     "abort": { "already_configured": "This physical device is already configured.", "cannot_connect": "The device is no longer reachable.", "invalid_host": "Discovery did not provide a usable address.", "reauth_successful": "Local authentication was updated." }
   },
-  "options": { "step": { "init": { "title": "Samsung Local options", "data": { "poll_interval": "Polling interval (seconds)", "enable_wol": "Enable Wake-on-LAN", "allow_writes_without_remote": "Allow non-critical settings while Smart Control reports off", "debug_diagnostics": "Include additional non-secret diagnostics" } } } },
+  "options": {
+    "step": {
+      "init": { "title": "Samsung Local options", "menu_options": { "settings": "Connection and Wake-on-LAN", "add_app": "Add or change an app", "remove_app": "Remove a custom app", "test_wol": "Test Wake-on-LAN", "test_app": "Test an app" } },
+      "settings": { "title": "Connection and Wake-on-LAN", "data": { "poll_interval": "Polling interval (seconds)", "auto_reconnect": "Reconnect automatically", "enable_wol": "Enable Wake-on-LAN", "mac": "TV MAC address", "wol_broadcast": "Broadcast or destination IPv4 address", "wol_port": "Wake-on-LAN UDP port", "power_on_timeout": "Power-on timeout (seconds)", "wol_retries": "Magic-packet attempts", "allow_writes_without_remote": "Allow non-critical settings while Smart Control reports off", "debug_diagnostics": "Include additional non-secret diagnostics" } },
+      "add_app": { "title": "Add or change a TV app", "description": "App IDs vary by TV, firmware and region. Add only IDs you intend to test on this TV; separate multiple values and aliases with commas.", "data": { "key": "Stable app key", "name": "Display name", "app_ids": "App IDs", "aliases": "Additional names", "method": "Launch method", "enabled": "Enabled" } },
+      "remove_app": { "title": "Remove a custom TV app", "data": { "key": "App" } },
+      "test_wol": { "title": "Test Wake-on-LAN", "description": "Turn the TV off first. Samsung Local reports success only after the local endpoint and Tizen connection respond." },
+      "test_app": { "title": "Test a TV app", "description": "Known app IDs are candidates until this TV confirms them.", "data": { "app": "App", "turn_on": "Turn on the TV first" } }
+    },
+    "error": { "invalid_mac": "Enter a valid six-byte MAC address.", "invalid_broadcast": "Enter a valid IPv4 broadcast or destination address.", "invalid_app": "Enter a name, a stable key and at least one valid app ID.", "wol_test_failed": "The TV did not become ready using the configured Wake-on-LAN settings.", "app_test_failed": "The local app launch failed. Check the app ID and launch method." }
+  },
+  "services": { "launch_app": { "name": "Launch TV app", "description": "Launch a configured or known app through the TV's local interface.", "fields": { "app": { "name": "App", "description": "App key, name, alias or registered app ID." }, "turn_on": { "name": "Turn on", "description": "Wake and reconnect the TV before launching the app when needed." } } } },
   "entity": {
     "sensor": { "machine_state": { "name": "Machine state" }, "program_progress": { "name": "Program progress" }, "program_progress_percentage": { "name": "Program progress" }, "remaining_time": { "name": "Remaining time" }, "estimated_finish": { "name": "Estimated finish" }, "error_code": { "name": "Error code" }, "energy_consumption": { "name": "Energy consumption" }, "power_consumption": { "name": "Power consumption" }, "connection_status": { "name": "Connection status" }, "job_beginning_status": { "name": "Start status" } },
     "binary_sensor": { "cycle_active": { "name": "Running" }, "remote_control_enabled": { "name": "Remote control" }, "child_lock": { "name": "Child lock" }, "power": { "name": "Power" } },
@@ -22,6 +33,6 @@
     "switch": { "power": { "name": "Power" } },
     "remote": { "remote": { "name": "Remote" } }
   },
-  "exceptions": { "command_failed": { "message": "The device rejected the command: {error}" }, "command_unsupported": { "message": "This device does not advertise that command." } },
+  "exceptions": { "command_failed": { "message": "The device rejected the command: {error}" }, "command_unsupported": { "message": "This device does not advertise that command." }, "invalid_tv_target": { "message": "Select at least one loaded Samsung Local television." }, "app_launch_failed": { "message": "The TV app could not be launched: {error}" }, "unsupported_media_type": { "message": "Samsung Local can only play media of type app on this television." } },
   "issues": { "unknown_capabilities": { "title": "New local Samsung functions detected", "description": "{device} reports {count} resources that Samsung Local does not map yet. Download redacted diagnostics and attach them to a device-support issue. Unknown resources are never exposed as arbitrary write controls." } }
 }

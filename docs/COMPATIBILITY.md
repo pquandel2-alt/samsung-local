@@ -32,11 +32,15 @@ eine redigierte Diagnose nach dem Ablauf in `HARDWARE_TESTING.md`.
 | Reconnect | `implemented_unverified` | simuliert geprüft |
 | Offline-Betrieb | `implemented_unverified` | Softwarepfad lokal; WAN-blockierter TV-Test fehlt |
 
+Wake-on-LAN und App-Starts sind für diesen Q60C softwareseitig vorhanden,
+aber MAC, Broadcast-Verhalten, App-IDs und Startverfahren wurden noch nicht am
+Gerät geprüft. Der Options Flow enthält deshalb getrennte WOL- und App-Tests.
+
 Bild-/Tonmodus und Helligkeit sind `unknown`, nicht als funktionierende
 Entitäten implementiert, weil dafür auf diesem Modell noch kein lokaler
 Endpunkt nachgewiesen wurde.
 
-## Samsung 8 Series (43), Firmware T-NKLDEUC-2410.0
+## Samsung GU43TU8079UXZG (TU8079, 43 Zoll), Firmware T-NKLDEUC-2410.0
 
 | Bereich | Status | Begründung |
 |---|---|---|
@@ -44,11 +48,22 @@ Endpunkt nachgewiesen wurde.
 | Verbindung | `implemented_unverified` | Modell wird per REST abgefragt, nicht aus Firmware abgeleitet |
 | Authentifizierung | `implemented_unverified` | Token-Pairing vorhanden |
 | Statusabfrage | `implemented_unverified` | Standby nur nach REST-Antwort |
-| Steuerung | `implemented_unverified` | gemeinsame Tizen-Befehle vorhanden |
+| Steuerung | `partial` | Magic Packet an WLAN-MAC wurde real bestätigt; neuer Samsung-Local-WOL-/App-Pfad noch nicht auf Hardware geprüft |
 | Entitätenerkennung | `implemented_unverified` | capabilities geräteabhängig |
 | Reconnect | `implemented_unverified` | simuliert geprüft |
 | Offline-Betrieb | `implemented_unverified` | Hardwaretest fehlt |
 
-Die genaue Modellnummer ist `unknown`. Die Firmware ist ausdrücklich keine
-Ersatz-Modellnummer.
+Die Modellnummer wurde inzwischen als GU43TU8079UXZG angegeben. Die Firmware
+bleibt ausdrücklich keine Ersatz-Modellnummer. Der erfolgreiche reale Test
+bestand aus `wake_on_lan.send_magic_packet` an die WLAN-MAC. Er bestätigt die
+Hardwarefähigkeit, aber noch nicht den vollständigen neuen Ablauf aus
+`media_player.turn_on`, Bereitschaftsprüfung, Token-Reconnect und App-Start.
 
+## Funktionsdetails für beide Fernseher
+
+| Funktion | GU43TU8079UXZG | GQ55Q60CAUXZG |
+|---|---|---|
+| Magic Packet erreicht Hardware | `confirmed` | `unknown` |
+| Samsung-Local `media_player.turn_on` | `implemented_unverified` | `implemented_unverified` |
+| Netflix/Prime/weitere Apps | `implemented_unverified` | `implemented_unverified` |
+| App-Aktivstatus lesbar | `unknown` | `unknown` |

@@ -1,0 +1,22 @@
+launch_app:
+  name: Launch TV app
+  description: Launch a registered Samsung TV app locally, optionally waking the TV first.
+  target:
+    entity:
+      domain: media_player
+      integration: samsung_local
+  fields:
+    app:
+      name: App
+      description: Registered app key, name, alias, or app ID.
+      required: true
+      example: netflix
+      selector:
+        text:
+    turn_on:
+      name: Turn on
+      description: Wake and confirm the television before launching when necessary.
+      required: false
+      default: true
+      selector:
+        boolean:

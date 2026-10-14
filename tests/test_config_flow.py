@@ -22,6 +22,7 @@ from custom_components.samsung_local.const import (
     CONF_POLL_INTERVAL,
     CONF_PORT,
     CONF_PROTOCOL,
+    CONF_TV_APPS,
     DOMAIN,
     PROTOCOL_TIZEN,
 )
@@ -159,19 +160,91 @@ async def test_options_flow_validates_polling_bounds(
     )
     entry.add_to_hass(hass)
     result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is data_entry_flow.FlowResultType.MENU
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "settings"}
+    )
     assert result["type"] is data_entry_flow.FlowResultType.FORM
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
         {
             CONF_POLL_INTERVAL: 45,
+            "auto_reconnect": True,
             "enable_wol": False,
+            "mac": "",
+            "wol_broadcast": "255.255.255.255",
+            "wol_port": 9,
+            "power_on_timeout": 45,
+            "wol_retries": 3,
             "allow_writes_without_remote": False,
             "debug_diagnostics": False,
         },
     )
     assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_POLL_INTERVAL] == 45
+
+
+async def test_tv_options_validate_wol_and_store_device_specific_app(
+    hass: HomeAssistant, enable_custom_integrations: None
+) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Bedroom TV",
+        unique_id="tv-app-options",
+        data={
+            CONF_HOST: "192.0.2.32",
+            CONF_PROTOCOL: PROTOCOL_TIZEN,
+            CONF_PORT: 8002,
+            CONF_DEVICE_ID: "tv-app-options",
+            CONF_DEVICE_TYPE: "tv",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "settings"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_POLL_INTERVAL: 30,
+            "auto_reconnect": True,
+            "enable_wol": True,
+            "mac": "invalid",
+            "wol_broadcast": "192.0.2.255",
+            "wol_port": 9,
+            "power_on_timeout": 45,
+            "wol_retries": 3,
+            "allow_writes_without_remote": False,
+            "debug_diagnostics": False,
+        },
+    )
+    assert result["type"] is data_entry_flow.FlowResultType.FORM
+    assert result["errors"]["mac"] == "invalid_mac"
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "add_app"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "key": "My Stream",
+            "name": "My Stream",
+            "app_ids": "org.example.stream, org.example.stream.alt",
+            "aliases": "stream, mein stream",
+            "method": "NATIVE_LAUNCH",
+            "enabled": True,
+        },
+    )
+    assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_TV_APPS][0]["key"] == "my_stream"
+    assert result["data"][CONF_TV_APPS][0]["app_ids"] == [
+        "org.example.stream",
+        "org.example.stream.alt",
+    ]
 
 
 @pytest.mark.parametrize(

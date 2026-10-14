@@ -7,6 +7,7 @@
 | `smartthings-local` | 0.1.24 | MIT | CoAP/DTLS, X.509/PSK, Observe, Probing | veröffentlichte Bibliothek statt kopiertem Protokoll |
 | `samsungtvws[async]` | 3.0.6 | LGPL-3.0 | Tizen WebSocket/REST/Pairing/Apps | unverändert dynamisch gelinkt |
 | `cbor2` | 5.9.0 | MIT | OCF-CBOR | direkter, sicherheitsaktualisierter Pin |
+| `wakeonlan` | 4.0.0 | MIT | Magic Packets an konfigurierbares IPv4-Ziel | etablierte, kleine Implementierung statt eigener Paketlogik |
 
 Transitive Kryptografie (`cryptography`, `pyOpenSSL`) wird durch
 `smartthings-local` verlangt und in Home Assistant zentral auf kompatible
@@ -32,6 +33,10 @@ sollen eine aktuelle, unterstützte Home-Assistant-Version verwenden.
 
 Ein Audit ist zeitgebunden und beweist keine Abwesenheit unbekannter Fehler.
 Der CI-Workflow wiederholt ihn bei Push, Pull Request und wöchentlich.
+
+`wakeonlan==4.0.0` wurde für diese Änderung ergänzt. Es führt keine Discovery
+und keinen externen Zugriff aus, sondern sendet ausschließlich das Magic
+Packet an die vom Benutzer gewählte lokale Zieladresse und UDP-Port.
 
 ## Entwicklung
 

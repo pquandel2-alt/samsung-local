@@ -17,7 +17,8 @@
   "requirements": [
     "cbor2==5.9.0",
     "samsungtvws[async]>=3.0.6",
-    "smartthings-local==0.1.24"
+    "smartthings-local==0.1.24",
+    "wakeonlan==4.0.0"
   ],
   "ssdp": [
     { "st": "urn:samsung.com:device:RemoteControlReceiver:1" },
@@ -31,7 +32,7 @@
       "st": "urn:schemas-upnp-org:service:RenderingControl:1"
     }
   ],
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0-beta.4",
   "zeroconf": [
     {
       "properties": { "manufacturer": "samsung*" },

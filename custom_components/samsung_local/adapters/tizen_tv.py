@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import socket
+import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from types import MappingProxyType
@@ -21,6 +21,13 @@ from samsungtvws.exceptions import (
 from samsungtvws.remote import ChannelEmitCommand, SendRemoteKey
 from websockets.exceptions import ConnectionClosed, WebSocketException
 
+from ..apps import (
+    AppLaunchMethod,
+    AppLaunchResult,
+    AppLaunchStatus,
+    TvApplication,
+    TvAppRegistry,
+)
 from ..const import PAIRING_TIMEOUT, REQUEST_TIMEOUT, TIZEN_PORTS
 from ..exceptions import (
     AuthenticationError,
@@ -40,6 +47,7 @@ from ..models import (
     Protocol,
     WriteSpec,
 )
+from ..power import SamsungTvPowerManager, WakeOnLanConfig
 from .base import SamsungDeviceAdapter
 
 TV_KEYS: dict[str, str] = {
@@ -74,17 +82,18 @@ SOURCES: dict[str, str] = {
 def _normalize_mac(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
-    digits = "".join(character for character in value.lower() if character in "0123456789abcdef")
+    candidate = value.strip().lower()
+    if re.fullmatch(r"[0-9a-f]{12}", candidate):
+        digits = candidate
+    elif re.fullmatch(r"(?:[0-9a-f]{2}:){5}[0-9a-f]{2}", candidate):
+        digits = candidate.replace(":", "")
+    elif re.fullmatch(r"(?:[0-9a-f]{2}-){5}[0-9a-f]{2}", candidate):
+        digits = candidate.replace("-", "")
+    else:
+        return None
     if len(digits) != 12 or set(digits) == {"0"}:
         return None
     return ":".join(digits[index : index + 2] for index in range(0, 12, 2))
-
-
-def _wake(mac: str) -> None:
-    packet = bytes.fromhex("ff" * 6 + mac.replace(":", "") * 16)
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as wol_socket:
-        wol_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        wol_socket.sendto(packet, ("255.255.255.255", 9))
 
 
 class TizenTvAdapter(SamsungDeviceAdapter):
@@ -99,6 +108,15 @@ class TizenTvAdapter(SamsungDeviceAdapter):
         token: str | None = None,
         mac_address: str | None = None,
         enable_wol: bool = False,
+        wol_broadcast: str = "255.255.255.255",
+        wol_port: int = 9,
+        power_on_timeout: float = 45.0,
+        wol_retries: int = 3,
+        configured_apps: list[dict[str, Any]] | None = None,
+        configured_device_id: str | None = None,
+        configured_name: str | None = None,
+        configured_model: str | None = None,
+        configured_firmware: str | None = None,
         allow_pairing: bool = False,
         token_callback: Callable[[str], None] | None = None,
     ) -> None:
@@ -116,7 +134,39 @@ class TizenTvAdapter(SamsungDeviceAdapter):
         self._lock = asyncio.Lock()
         self._raw_info: dict[str, Any] = {}
         self._apps: dict[str, str] = {}
-        self._info: DeviceInfo | None = None
+        self.app_registry = TvAppRegistry(configured_apps)
+        self.power_manager = SamsungTvPowerManager(
+            WakeOnLanConfig(
+                enabled=enable_wol,
+                mac_address=self.mac_address,
+                broadcast_address=wol_broadcast,
+                port=wol_port,
+                timeout=power_on_timeout,
+                retries=wol_retries,
+            )
+        )
+        self._app_discovery_attempted = False
+        self._info: DeviceInfo | None = (
+            DeviceInfo(
+                device_id=configured_device_id,
+                name=configured_name or "Samsung TV",
+                category=DeviceCategory.TV,
+                protocol=Protocol.TIZEN,
+                model=configured_model,
+                firmware=configured_firmware,
+                mac_address=self.mac_address,
+                host=self.host,
+                authentication=(
+                    AuthenticationStatus.AUTHENTICATED
+                    if token
+                    else AuthenticationStatus.NOT_REQUIRED
+                    if port == 8001
+                    else AuthenticationStatus.REQUIRED
+                ),
+            )
+            if configured_device_id
+            else None
+        )
         self._connection = ConnectionStatus.DISCONNECTED
         self._last_success: datetime | None = None
 
@@ -207,26 +257,33 @@ class TizenTvAdapter(SamsungDeviceAdapter):
                 self._update_info()
                 self._connection = ConnectionStatus.CONNECTED
                 self._last_success = datetime.now(UTC)
-                try:
-                    installed = await remote.app_list()
-                except (
-                    ConnectionFailure,
-                    ConnectionClosed,
-                    WebSocketException,
-                    TimeoutError,
-                ):
-                    installed = None
+                installed = None
+                if not self._app_discovery_attempted:
+                    try:
+                        async with asyncio.timeout(6):
+                            installed = await remote.app_list()
+                    except (
+                        ConnectionFailure,
+                        ConnectionClosed,
+                        WebSocketException,
+                        TimeoutError,
+                    ):
+                        pass
                 if installed:
                     self._apps = {
                         str(app["name"]): str(app["appId"])
                         for app in installed
                         if app.get("name") and app.get("appId")
                     }
+                    for app_name, app_id in self._apps.items():
+                        self.app_registry.add_discovered(app_name, app_id)
+                self._app_discovery_attempted = True
                 return
             if isinstance(last_error, UnauthorizedError):
                 raise AuthenticationError(
                     "TV pairing was denied or its token is invalid"
                 ) from last_error
+            self._connection = ConnectionStatus.DISCONNECTED
             raise CannotConnectError("no supported Tizen endpoint responded") from last_error
 
     async def disconnect(self) -> None:
@@ -246,6 +303,15 @@ class TizenTvAdapter(SamsungDeviceAdapter):
     def _update_info(self) -> None:
         device = self._device()
         self.mac_address = _normalize_mac(device.get("wifiMac")) or self.mac_address
+        if self.mac_address != self.power_manager.config.mac_address:
+            self.power_manager.config = WakeOnLanConfig(
+                enabled=self.power_manager.config.enabled,
+                mac_address=self.mac_address,
+                broadcast_address=self.power_manager.config.broadcast_address,
+                port=self.power_manager.config.port,
+                timeout=self.power_manager.config.timeout,
+                retries=self.power_manager.config.retries,
+            )
         device_id = str(
             device.get("id") or self._raw_info.get("id") or self.mac_address or f"tv-{self.host}"
         )
@@ -273,17 +339,28 @@ class TizenTvAdapter(SamsungDeviceAdapter):
             raise CannotConnectError("TV identity is unavailable before pairing")
         return self._info
 
+    def _app_sources(self) -> dict[str, str]:
+        """Map collision-free source labels to logical app keys."""
+        sources: dict[str, str] = {}
+        for app in self.app_registry.exposed_apps():
+            label = app.name if app.name not in SOURCES else f"App: {app.name}"
+            if label in sources:
+                label = f"{label} ({app.key})"
+            sources[label] = app.key
+        return sources
+
     def _capabilities(self) -> dict[str, Capability]:
         power = self._connection is ConnectionStatus.CONNECTED
+        app_sources = self._app_sources()
         capabilities: dict[str, Capability] = {
             "media_player": Capability(
                 key="media_player",
                 platform=EntityPlatform.MEDIA_PLAYER,
                 value="on" if power else "off",
                 attributes={
-                    "sources": tuple((*SOURCES, *self._apps)),
+                    "sources": tuple((*SOURCES, *app_sources)),
                     "can_power_on": bool(self.enable_wol and self.mac_address),
-                    "can_launch_apps": bool(self._apps),
+                    "can_launch_apps": bool(self.app_registry.all_apps()),
                 },
             ),
             "remote": Capability(
@@ -303,19 +380,37 @@ class TizenTvAdapter(SamsungDeviceAdapter):
                 entity_category="diagnostic",
             ),
         }
-        if self._apps:
+        if app_sources:
             capabilities["application"] = Capability(
                 key="application",
                 platform=EntityPlatform.SELECT,
                 value=None,
                 writable=True,
-                options=tuple(self._apps),
+                options=tuple(app_sources),
                 write=WriteSpec(command="launch_app"),
             )
         return capabilities
 
     async def get_capabilities(self) -> dict[str, Capability]:
         return self._capabilities()
+
+    def get_fallback_state(self) -> DeviceSnapshot | None:
+        """Keep an already configured WOL TV controllable during deep standby."""
+        if (
+            self._info is None
+            or not self.enable_wol
+            or self.mac_address is None
+            or (self.port == 8002 and not self.token)
+        ):
+            return None
+        self._connection = ConnectionStatus.DISCONNECTED
+        return DeviceSnapshot(
+            info=self._info,
+            connection=ConnectionStatus.DISCONNECTED,
+            capabilities=MappingProxyType(self._capabilities()),
+            raw=MappingProxyType({}),
+            error_category="startup_unreachable",
+        )
 
     async def get_state(self) -> DeviceSnapshot:
         if self.port is None:
@@ -354,37 +449,181 @@ class TizenTvAdapter(SamsungDeviceAdapter):
             await self.disconnect()
             raise CannotConnectError("TV command connection failed") from err
 
+    async def _is_powered_on(self) -> bool:
+        """Probe REST without turning a missing endpoint into an off state."""
+        if self.port is None:
+            return False
+        raw = await self._device_info_for_port(self.port)
+        if raw is None:
+            return False
+        self._raw_info = raw
+        power_state = str(self._device().get("PowerState", "on")).lower()
+        return power_state not in {"standby", "off"}
+
+    async def _connect_after_wake(self) -> None:
+        remote = self._remote
+        if remote is not None and not remote.is_alive():
+            await self.disconnect()
+        await self.connect()
+        if self._remote is None or not self._remote.is_alive():
+            raise CannotConnectError("TV REST endpoint is ready but WebSocket is unavailable")
+
+    async def _async_power_on(self) -> None:
+        if not self.power_manager.config.enabled:
+            raise CommandNotSupportedError("Wake-on-LAN is not configured for this TV")
+        await self.power_manager.async_power_on(self._is_powered_on, self._connect_after_wake)
+        self._connection = ConnectionStatus.CONNECTED
+        self._last_success = datetime.now(UTC)
+
+    @staticmethod
+    def _status_boolean(value: Any) -> bool | None:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.casefold()
+            if normalized in {"true", "yes", "1", "running", "visible"}:
+                return True
+            if normalized in {"false", "no", "0", "stopped", "hidden"}:
+                return False
+        return None
+
+    async def _app_status(self, app_id: str) -> tuple[bool, bool | None]:
+        """Return (endpoint confirmed, active) without inventing app state."""
+        if self._rest is None:
+            return False, None
+        try:
+            response = await self._rest.rest_app_status(app_id)
+        except (HttpApiError, ResponseError, TimeoutError, aiohttp.ClientError, OSError):
+            return False, None
+        if not isinstance(response, dict) or not response:
+            return False, None
+        active_values = [self._status_boolean(response.get(key)) for key in ("running", "visible")]
+        active = True if True in active_values else False if False in active_values else None
+        confirmed = any(key in response for key in ("id", "name", "running", "visible", "version"))
+        return confirmed, active
+
+    async def _select_app_id(self, app: TvApplication) -> str:
+        """Prefer an ID whose local status endpoint confirms installation."""
+        for app_id in app.app_ids:
+            confirmed, _ = await self._app_status(app_id)
+            if confirmed:
+                return app_id
+        return app.app_ids[0]
+
+    async def _send_app_launch(self, app_id: str, method: AppLaunchMethod) -> tuple[bool, bool]:
+        """Send once; return command-sent and immediate device-confirmed flags."""
+        if method is AppLaunchMethod.REST:
+            if self._rest is None:
+                raise CommandNotSupportedError("REST app launch endpoint is unavailable")
+            response = await self._rest.rest_app_run(app_id)
+            return True, isinstance(response, dict) and bool(response)
+        if self._remote is None or not self._remote.is_alive():
+            await self.connect()
+        assert self._remote is not None
+        await self._remote.send_command(ChannelEmitCommand.launch_app(app_id, method.value))
+        return True, False
+
+    async def _launch_app(self, value: str, *, turn_on: bool) -> AppLaunchResult:
+        """Resolve, wake, launch and verify through one shared code path."""
+        app = self.app_registry.resolve(value)
+        if not await self._is_powered_on():
+            if not turn_on:
+                raise CannotConnectError("TV is not ready and automatic power-on was disabled")
+            await self._async_power_on()
+        else:
+            await self._connect_after_wake()
+
+        app_id = await self._select_app_id(app)
+        methods = (
+            (AppLaunchMethod.DEEP_LINK, AppLaunchMethod.REST)
+            if app.method is AppLaunchMethod.AUTO
+            else (app.method,)
+        )
+        last_error: Exception | None = None
+        for method in methods:
+            try:
+                command_sent, device_confirmed = await self._send_app_launch(app_id, method)
+            except (
+                CommandNotSupportedError,
+                ConnectionFailure,
+                ConnectionClosed,
+                WebSocketException,
+                HttpApiError,
+                ResponseError,
+                TimeoutError,
+                aiohttp.ClientError,
+                OSError,
+            ) as err:
+                last_error = err
+                continue
+
+            active: bool | None = None
+            for _ in range(3):
+                await asyncio.sleep(1)
+                confirmed, active = await self._app_status(app_id)
+                device_confirmed = device_confirmed or confirmed
+                if active is True:
+                    break
+            status = (
+                AppLaunchStatus.ACTIVE
+                if active is True
+                else AppLaunchStatus.DEVICE_CONFIRMED
+                if device_confirmed
+                else AppLaunchStatus.ACTIVATION_UNVERIFIABLE
+            )
+            result = AppLaunchResult(
+                key=app.key,
+                app_id=app_id,
+                method=method,
+                status=status,
+                command_sent=command_sent,
+                device_confirmed=device_confirmed,
+                active=active,
+            )
+            self.app_registry.record_launch(app, result, datetime.now(UTC))
+            return result
+        result = AppLaunchResult(
+            key=app.key,
+            app_id=app_id,
+            method=methods[-1],
+            status=AppLaunchStatus.FAILED,
+            command_sent=False,
+            device_confirmed=False,
+            active=None,
+        )
+        self.app_registry.record_launch(app, result, datetime.now(UTC))
+        raise CannotConnectError("all configured local app launch methods failed") from last_error
+
     async def execute_command(self, command: str, **kwargs: Any) -> None:
+        if command == "test_wol":
+            if await self._is_powered_on():
+                raise InvalidCommandError("turn the TV off before testing Wake-on-LAN")
+            await self._async_power_on()
+            return
         if command == "power_on":
-            if not self.enable_wol or not self.mac_address:
-                raise CommandNotSupportedError("Wake-on-LAN is not configured with a valid MAC")
-            await asyncio.to_thread(_wake, self.mac_address)
+            await self._async_power_on()
             return
         if command == "select_source":
             source = str(kwargs.get("value", ""))
-            if source in self._apps:
-                command, kwargs = "launch_app", {"value": source}
+            app_sources = self._app_sources()
+            if source in app_sources:
+                await self._launch_app(app_sources[source], turn_on=True)
+                return
             elif source in SOURCES:
                 await self._send_key(SOURCES[source])
                 return
             else:
                 raise InvalidCommandError(f"unknown TV source {source!r}")
-        if command == "launch_app":
+        if command in {"launch_app", "application"}:
             application = str(kwargs.get("value", ""))
-            known_ids = set(self._apps.values())
-            if application not in self._apps and application not in known_ids:
-                raise InvalidCommandError("the TV did not advertise this application")
-            app_id = self._apps.get(application, application)
-            if self._remote is None or not self._remote.is_alive():
-                await self.connect()
-            assert self._remote is not None
-            await self._remote.send_command(ChannelEmitCommand.launch_app(app_id))
+            await self._launch_app(application, turn_on=bool(kwargs.get("turn_on", True)))
             return
         if command == "close_app":
             app_id = str(kwargs.get("value", ""))
             if not app_id or self._rest is None:
                 raise CommandNotSupportedError("app close requires a known application id")
-            await self._rest.rest_app_close(self._apps.get(app_id, app_id))
+            app = self.app_registry.resolve(app_id)
+            await self._rest.rest_app_close(app.app_ids[0])
             return
         if command == "remote_key":
             key = str(kwargs.get("value", ""))
@@ -405,6 +644,8 @@ class TizenTvAdapter(SamsungDeviceAdapter):
             "token_present": bool(self.token),
             "connection": self._connection.value,
             "app_count": len(self._apps),
+            "power": self.power_manager.diagnostics(),
+            "apps": self.app_registry.diagnostics(),
             "device_features": {
                 key: value
                 for key, value in device.items()

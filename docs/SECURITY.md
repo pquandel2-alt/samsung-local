@@ -39,6 +39,11 @@ werden abgelehnt. Ein separates VLAN ist für solche Altgeräte sinnvoll.
 - bestätigter Zustand wird erst nach der nächsten Geräteantwort geändert;
 - keine Tür-/Kindersicherungsumgehung, kein generischer Raw-Write-Service.
 
+App-Namen werden nur gegen die gerätespezifische Registry aufgelöst. App-IDs
+akzeptieren ausschließlich eine begrenzte Zeichenmenge; es gibt weder Shell-
+noch beliebige URL-/Netzwerkparameter. Wake-on-LAN verwendet nur die im
+Config Entry validierte MAC, IPv4-Zieladresse und UDP-Port. MAC, Broadcast,
+Token und IP werden in Diagnosen redigiert.
+
 Sicherheitsmeldungen bitte privat an den späteren Repository-Maintainer senden;
 keine echten Credentials oder Identifikatoren in öffentliche Issues stellen.
-

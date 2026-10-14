@@ -18,6 +18,8 @@ Connection Manager ---- Lock, Backoff, keine Write-Retries
         |
 SamsungDeviceAdapter (async contract)
    |-- TizenTvAdapter ---- samsungtvws ---- WS/REST 8001/8002
+   |      |-- SamsungTvPowerManager ---- lokales UDP Wake-on-LAN
+   |      `-- TvAppRegistry ---- Alias/ID/Startverfahren pro TV
    |-- OcfApplianceAdapter ---- smartthings-local ---- CoAP/DTLS
    `-- LegacyApplianceAdapter ---- isoliertes HTTPS/TLS1.0 8888
         |
@@ -71,6 +73,21 @@ Automationen stabil.
   nicht beweist, dass der Befehl nicht ausgeführt wurde;
 - TV-REST-Antwort `PowerState=standby/off` ist Standby, ein Timeout nur
   `disconnected`.
+
+`power_on` ist ein Sonderfall: Der Connection Manager verlangt nicht zuerst
+eine bereits bestehende TV-Verbindung. Der Power Manager sendet begrenzt
+Magic Packets, prüft den REST-Endpunkt und bestätigt anschließend den
+WebSocket mit dem gespeicherten Token. App-Befehle werden je Gerät
+serialisiert; ein noch wartender alter App-Auftrag wird von einem neueren
+kontrolliert überholt. App-Start, Source-Auswahl und `play_media` münden in
+denselben Launcher.
+
+Ist ein bereits gekoppelter WOL-TV beim Home-Assistant-Start im Deep Standby,
+darf ein aus gespeicherter stabiler ID, Modell, MAC und Capabilities erzeugter
+Fallback-Snapshot den Config Entry laden. Er kennzeichnet die Verbindung
+explizit als getrennt und erfindet keinen Off-Zustand. Nur der Media Player
+bleibt für `turn_on` aufrufbar. Authentifizierungsfehler dürfen diesen Fallback
+nicht verwenden, sondern starten weiterhin Reauth.
 
 ## Authentifizierung
 

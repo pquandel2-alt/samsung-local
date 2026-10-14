@@ -59,6 +59,21 @@ REST-Erreichbarkeit und Strom-/Deep-Standby-Einstellungen. Wake-on-LAN braucht
 oft dasselbe Layer-2-Netz und funktioniert je nach TV über Ethernet
 zuverlässiger als WLAN.
 
+## Wake-on-LAN oder App-Start schlägt fehl
+
+Unter Samsung Local → Konfigurieren → Optionen zuerst MAC, Broadcast/Ziel,
+UDP-Port und Zeitlimit prüfen. Danach „Wake-on-LAN testen“ verwenden. Erfolg
+bedeutet, dass nicht nur das Paket gesendet wurde, sondern auch REST und
+Tizen-WebSocket wieder bereit waren. Bei VLANs ist häufig die gerichtete
+Broadcast-Adresse des TV-Netzes erforderlich.
+
+Für Apps zuerst „App testen“ verwenden. Liefert der Fernseher keine App-Liste,
+eine gerätespezifische ID und das Startverfahren hinterlegen. Die bekannten
+IDs sind keine Installationsgarantie. In der redigierten Diagnose zeigen
+`command_sent`, `device_confirmed` und `active`, wie weit der lokale Ablauf
+beobachtbar war. Nicht blind wiederholen: Ein gesendeter Befehl kann trotz
+nicht lesbarem Aktivstatus erfolgreich gewesen sein.
+
 ## Fehlende Funktion
 
 Wenn unter Reparaturen „Neue lokale Samsung-Funktionen“ erscheint, Diagnose

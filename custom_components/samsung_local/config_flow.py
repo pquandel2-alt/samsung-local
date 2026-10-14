@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 from typing import Any, Self
 
 try:
@@ -20,13 +21,15 @@ from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .adapters.legacy_appliance import LegacyApplianceAdapter
 from .adapters.ocf_appliance import OcfApplianceAdapter
-from .adapters.tizen_tv import TizenTvAdapter
+from .adapters.tizen_tv import TizenTvAdapter, _normalize_mac
+from .apps import AppLaunchMethod, TvAppRegistry, normalize_app_key
 from .authentication.manager import AuthenticationManager, OcfCredentialKind
 from .const import (
     AUTH_CERTIFICATE,
     AUTH_PSK,
     CONF_ALLOW_WRITES_WITHOUT_REMOTE,
     CONF_AUTH_TYPE,
+    CONF_AUTO_RECONNECT,
     CONF_CERTIFICATE,
     CONF_DEBUG_DIAGNOSTICS,
     CONF_DEVICE_ID,
@@ -37,21 +40,40 @@ from .const import (
     CONF_MODEL,
     CONF_POLL_INTERVAL,
     CONF_PORT,
+    CONF_POWER_ON_TIMEOUT,
     CONF_PRIVATE_KEY,
     CONF_PROTOCOL,
     CONF_PSK_IDENTITY,
     CONF_PSK_KEY,
     CONF_TOKEN,
+    CONF_TV_APPS,
+    CONF_WOL_BROADCAST,
+    CONF_WOL_PORT,
+    CONF_WOL_RETRIES,
+    DEFAULT_AUTO_RECONNECT,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_POWER_ON_TIMEOUT,
+    DEFAULT_WOL_BROADCAST,
+    DEFAULT_WOL_PORT,
+    DEFAULT_WOL_RETRIES,
     DOMAIN,
     MAX_POLL_INTERVAL,
+    MAX_POWER_ON_TIMEOUT,
+    MAX_WOL_RETRIES,
     MIN_POLL_INTERVAL,
+    MIN_POWER_ON_TIMEOUT,
+    MIN_WOL_RETRIES,
     PROTOCOL_LEGACY,
     PROTOCOL_OCF,
     PROTOCOL_TIZEN,
 )
 from .discovery import async_discover_host, host_from_discovery_url
-from .exceptions import AuthenticationError, CannotConnectError
+from .exceptions import (
+    AuthenticationError,
+    CannotConnectError,
+    InvalidCommandError,
+    SamsungLocalError,
+)
 from .models import DiscoveryResult, Protocol
 
 PROTOCOL_AUTO = "auto"
@@ -425,29 +447,202 @@ class SamsungLocalOptionsFlow(config_entries.OptionsFlow):
     """Per-device reliability and explicit safety options."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self.config_entry.data.get(CONF_PROTOCOL) == PROTOCOL_TIZEN:
+            menu = ["settings", "add_app", "test_wol", "test_app"]
+            if self.config_entry.options.get(CONF_TV_APPS):
+                menu.insert(2, "remove_app")
+            return self.async_show_menu(step_id="init", menu_options=menu)
+        return await self.async_step_settings(user_input)
+
+    async def async_step_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure polling, reconnect and per-TV Wake-on-LAN."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            if user_input.get(CONF_ENABLE_WOL):
+                normalized_mac = _normalize_mac(user_input.get(CONF_MAC))
+                if normalized_mac is None:
+                    errors[CONF_MAC] = "invalid_mac"
+                else:
+                    user_input[CONF_MAC] = normalized_mac
+                try:
+                    if ipaddress.ip_address(user_input[CONF_WOL_BROADCAST]).version != 4:
+                        errors[CONF_WOL_BROADCAST] = "invalid_broadcast"
+                except ValueError:
+                    errors[CONF_WOL_BROADCAST] = "invalid_broadcast"
+            if not errors:
+                return self.async_create_entry(
+                    title="", data={**self.config_entry.options, **user_input}
+                )
         options = self.config_entry.options
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
+        is_tv = self.config_entry.data.get(CONF_PROTOCOL) == PROTOCOL_TIZEN
+        schema: dict[Any, Any] = {
+            vol.Required(
+                CONF_POLL_INTERVAL,
+                default=options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL),
+            ): vol.All(vol.Coerce(int), vol.Range(MIN_POLL_INTERVAL, MAX_POLL_INTERVAL)),
+            vol.Required(
+                CONF_AUTO_RECONNECT,
+                default=options.get(CONF_AUTO_RECONNECT, DEFAULT_AUTO_RECONNECT),
+            ): bool,
+            vol.Required(
+                CONF_ALLOW_WRITES_WITHOUT_REMOTE,
+                default=options.get(CONF_ALLOW_WRITES_WITHOUT_REMOTE, False),
+            ): bool,
+            vol.Required(
+                CONF_DEBUG_DIAGNOSTICS,
+                default=options.get(CONF_DEBUG_DIAGNOSTICS, False),
+            ): bool,
+        }
+        if is_tv:
+            schema.update(
                 {
-                    vol.Required(
-                        CONF_POLL_INTERVAL,
-                        default=options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL),
-                    ): vol.All(vol.Coerce(int), vol.Range(MIN_POLL_INTERVAL, MAX_POLL_INTERVAL)),
                     vol.Required(
                         CONF_ENABLE_WOL,
                         default=options.get(CONF_ENABLE_WOL, False),
                     ): bool,
+                    vol.Optional(
+                        CONF_MAC,
+                        default=options.get(CONF_MAC) or self.config_entry.data.get(CONF_MAC) or "",
+                    ): str,
                     vol.Required(
-                        CONF_ALLOW_WRITES_WITHOUT_REMOTE,
-                        default=options.get(CONF_ALLOW_WRITES_WITHOUT_REMOTE, False),
-                    ): bool,
+                        CONF_WOL_BROADCAST,
+                        default=options.get(CONF_WOL_BROADCAST, DEFAULT_WOL_BROADCAST),
+                    ): str,
                     vol.Required(
-                        CONF_DEBUG_DIAGNOSTICS,
-                        default=options.get(CONF_DEBUG_DIAGNOSTICS, False),
-                    ): bool,
+                        CONF_WOL_PORT,
+                        default=options.get(CONF_WOL_PORT, DEFAULT_WOL_PORT),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
+                    vol.Required(
+                        CONF_POWER_ON_TIMEOUT,
+                        default=options.get(CONF_POWER_ON_TIMEOUT, DEFAULT_POWER_ON_TIMEOUT),
+                    ): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(MIN_POWER_ON_TIMEOUT, MAX_POWER_ON_TIMEOUT),
+                    ),
+                    vol.Required(
+                        CONF_WOL_RETRIES,
+                        default=options.get(CONF_WOL_RETRIES, DEFAULT_WOL_RETRIES),
+                    ): vol.All(vol.Coerce(int), vol.Range(MIN_WOL_RETRIES, MAX_WOL_RETRIES)),
+                }
+            )
+        return self.async_show_form(
+            step_id="settings",
+            data_schema=vol.Schema(schema),
+            errors=errors,
+        )
+
+    async def async_step_add_app(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add or replace one explicit per-TV app mapping."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            key = normalize_app_key(user_input["key"])
+            item = {
+                "key": key,
+                "name": user_input["name"].strip(),
+                "app_ids": [
+                    value.strip() for value in user_input["app_ids"].split(",") if value.strip()
+                ],
+                "aliases": [
+                    value.strip() for value in user_input["aliases"].split(",") if value.strip()
+                ],
+                "method": user_input["method"],
+                "enabled": user_input["enabled"],
+            }
+            try:
+                TvAppRegistry([item])
+            except InvalidCommandError:
+                errors["base"] = "invalid_app"
+            else:
+                configured = [
+                    app
+                    for app in self.config_entry.options.get(CONF_TV_APPS, [])
+                    if app.get("key") != key
+                ]
+                configured.append(item)
+                return self.async_create_entry(
+                    title="",
+                    data={**self.config_entry.options, CONF_TV_APPS: configured},
+                )
+        return self.async_show_form(
+            step_id="add_app",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("key"): str,
+                    vol.Required("name"): str,
+                    vol.Required("app_ids"): str,
+                    vol.Optional("aliases", default=""): str,
+                    vol.Required("method", default=AppLaunchMethod.AUTO.value): vol.In(
+                        [method.value for method in AppLaunchMethod]
+                    ),
+                    vol.Required("enabled", default=True): bool,
                 }
             ),
+            errors=errors,
+        )
+
+    async def async_step_remove_app(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Remove one user-defined app without touching discovered records."""
+        configured = self.config_entry.options.get(CONF_TV_APPS, [])
+        choices = {str(app["key"]): str(app.get("name") or app["key"]) for app in configured}
+        if user_input is not None:
+            remaining = [app for app in configured if app.get("key") != user_input["key"]]
+            return self.async_create_entry(
+                title="",
+                data={**self.config_entry.options, CONF_TV_APPS: remaining},
+            )
+        return self.async_show_form(
+            step_id="remove_app",
+            data_schema=vol.Schema({vol.Required("key"): vol.In(choices)}),
+        )
+
+    async def async_step_test_wol(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Run the configured confirmed wake sequence after explicit submission."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                await self.config_entry.runtime_data.async_command("test_wol")
+            except (AttributeError, SamsungLocalError):
+                errors["base"] = "wol_test_failed"
+            else:
+                return self.async_create_entry(title="", data=dict(self.config_entry.options))
+        return self.async_show_form(step_id="test_wol", data_schema=vol.Schema({}), errors=errors)
+
+    async def async_step_test_app(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Launch one known/configured app through the production path."""
+        adapter = getattr(getattr(self.config_entry, "runtime_data", None), "manager", None)
+        app_registry = getattr(getattr(adapter, "adapter", None), "app_registry", None)
+        choices = (
+            {app.key: app.name for app in app_registry.all_apps()}
+            if app_registry is not None
+            else {app.key: app.name for app in TvAppRegistry().all_apps()}
+        )
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                await self.config_entry.runtime_data.async_command(
+                    "launch_app", value=user_input["app"], turn_on=user_input["turn_on"]
+                )
+            except (AttributeError, SamsungLocalError):
+                errors["base"] = "app_test_failed"
+            else:
+                return self.async_create_entry(title="", data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="test_app",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("app"): vol.In(choices),
+                    vol.Required("turn_on", default=True): bool,
+                }
+            ),
+            errors=errors,
         )

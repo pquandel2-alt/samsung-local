@@ -25,6 +25,12 @@ den HACS-Standardkatalog ist nicht Bestandteil dieses lokalen Builds.
 5. Unter Einstellungen → Geräte & Dienste → Integration hinzufügen nach
    „Samsung Local“ suchen.
 
+Nach dem ersten TV-Pairing unter Samsung Local → Konfigurieren → Optionen die
+gerätebezogene Wake-on-LAN-Konfiguration speichern. Eine WLAN-MAC wird nur für
+den konkreten Fernseher hinterlegt und niemals als Projektstandard verwendet.
+Den Test bei ausgeschaltetem TV ausführen. Apps können im selben Options-Menü
+hinzugefügt und anschließend einzeln lokal getestet werden.
+
 Keine PEM- oder Key-Datei gehört in den Integrationsordner. Zugangsdaten werden
 im UI-Flow eingegeben und im Home-Assistant-Config-Entry gespeichert. Sichere
 Backups von Home Assistant schützen deshalb auch diese Secrets.
@@ -34,4 +40,3 @@ Backups von Home Assistant schützen deshalb auch diese Secrets.
 Zuerst den Samsung-Local-Config-Entry in Home Assistant entfernen, dann bei
 Bedarf die Dateien löschen. Vorhandene SmartThings-Integrationen oder
 Automationen werden von Samsung Local nie automatisch verändert.
-

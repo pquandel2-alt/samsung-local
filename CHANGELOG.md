@@ -5,9 +5,25 @@ Projekt verwendet [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-- Hardwarevalidierung für die drei Zielgeräte steht aus.
+- Weitere Hardwarevalidierung für App-Starts, den vollständigen WOL-Ablauf
+  und die Haushaltsgeräte steht aus.
 - Aufnahme in den HACS-Standardkatalog steht aus; die Installation als
   benutzerdefiniertes HACS-Repository ist vorbereitet.
+
+## [0.1.0-beta.4] - 2026-10-14
+
+### Added
+
+- Integriertes, bestätigtes Wake-on-LAN mit gerätespezifischer MAC,
+  Broadcast-Adresse, UDP-Port, Timeout, begrenzten Versuchen und UI-Test.
+- Gerätespezifische Tizen-App-Registry mit bekannten Kandidaten, automatischer
+  Erkennung, manuellen IDs, Aliasen und DEEP_LINK/NATIVE_LAUNCH/REST.
+- Gemeinsamer App-Launcher für `media_player.select_source`,
+  `media_player.play_media` und `samsung_local.launch_app`, einschließlich
+  optionalem Wake-on-LAN und Reconnect.
+- Sichere App-/Power-Diagnosen und Homeintent-Integrationsanleitung.
+- Reiner Wake-on-LAN-Hardwaretest am GU43TU8079UXZG bestätigt; vollständiger
+  Samsung-Local-Pfad und reale App-Starts stehen noch aus.
 
 ## [0.1.0-beta.3] - 2026-10-12
 
@@ -47,7 +63,8 @@ Projekt verwendet [Semantic Versioning](https://semver.org/).
 - Deutsche und englische Oberfläche, HACS-Metadaten, CI-Konfiguration,
   Tests, Sicherheits-, Installations-, Migrations- und Hardwaretestdokumente.
 
-[Unreleased]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.3...HEAD
+[Unreleased]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.4...HEAD
+[0.1.0-beta.4]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.3...v0.1.0-beta.4
 [0.1.0-beta.3]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.1...v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/pquandel2-alt/samsung-local/releases/tag/v0.1.0-beta.1

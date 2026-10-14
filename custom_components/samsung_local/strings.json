@@ -65,12 +65,70 @@
     "step": {
       "init": {
         "title": "Samsung Local options",
+        "menu_options": {
+          "settings": "Connection and Wake-on-LAN",
+          "add_app": "Add or change an app",
+          "remove_app": "Remove a custom app",
+          "test_wol": "Test Wake-on-LAN",
+          "test_app": "Test an app"
+        }
+      },
+      "settings": {
+        "title": "Connection and Wake-on-LAN",
         "data": {
           "poll_interval": "Polling interval (seconds)",
+          "auto_reconnect": "Reconnect automatically",
           "enable_wol": "Enable Wake-on-LAN",
+          "mac": "TV MAC address",
+          "wol_broadcast": "Broadcast or destination IPv4 address",
+          "wol_port": "Wake-on-LAN UDP port",
+          "power_on_timeout": "Power-on timeout (seconds)",
+          "wol_retries": "Magic-packet attempts",
           "allow_writes_without_remote": "Allow non-critical settings while Smart Control reports off",
           "debug_diagnostics": "Include additional non-secret diagnostics"
         }
+      },
+      "add_app": {
+        "title": "Add or change a TV app",
+        "description": "App IDs vary by TV, firmware and region. Add only IDs you intend to test on this TV; separate multiple values and aliases with commas.",
+        "data": {
+          "key": "Stable app key",
+          "name": "Display name",
+          "app_ids": "App IDs",
+          "aliases": "Additional names",
+          "method": "Launch method",
+          "enabled": "Enabled"
+        }
+      },
+      "remove_app": {
+        "title": "Remove a custom TV app",
+        "data": { "key": "App" }
+      },
+      "test_wol": {
+        "title": "Test Wake-on-LAN",
+        "description": "Turn the TV off first. Samsung Local sends the configured magic packets and reports success only after the local TV endpoint and Tizen connection respond."
+      },
+      "test_app": {
+        "title": "Test a TV app",
+        "description": "Known app IDs are candidates until this TV confirms them.",
+        "data": { "app": "App", "turn_on": "Turn on the TV first" }
+      }
+    },
+    "error": {
+      "invalid_mac": "Enter a valid six-byte MAC address.",
+      "invalid_broadcast": "Enter a valid IPv4 broadcast or destination address.",
+      "invalid_app": "Enter a name, a stable key and at least one valid app ID.",
+      "wol_test_failed": "The TV did not become ready using the configured Wake-on-LAN settings.",
+      "app_test_failed": "The local app launch failed. Check the app ID and launch method."
+    }
+  },
+  "services": {
+    "launch_app": {
+      "name": "Launch TV app",
+      "description": "Launch a configured or known app through the TV's local interface.",
+      "fields": {
+        "app": { "name": "App", "description": "App key, name, alias or registered app ID." },
+        "turn_on": { "name": "Turn on", "description": "Wake and reconnect the TV before launching the app when needed." }
       }
     }
   },
@@ -111,7 +169,10 @@
   },
   "exceptions": {
     "command_failed": { "message": "The device rejected the command: {error}" },
-    "command_unsupported": { "message": "This device does not advertise that command." }
+    "command_unsupported": { "message": "This device does not advertise that command." },
+    "invalid_tv_target": { "message": "Select at least one loaded Samsung Local television." },
+    "app_launch_failed": { "message": "The TV app could not be launched: {error}" },
+    "unsupported_media_type": { "message": "Samsung Local can only play media of type app on this television." }
   },
   "issues": {
     "unknown_capabilities": {
