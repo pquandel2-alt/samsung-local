@@ -7,7 +7,32 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from custom_components.samsung_local.exceptions import CannotConnectError, InvalidCommandError
-from custom_components.samsung_local.power import SamsungTvPowerManager, WakeOnLanConfig
+from custom_components.samsung_local.power import (
+    SamsungTvPowerManager,
+    WakeOnLanConfig,
+    _send_magic_packet,
+)
+
+
+def test_sender_supports_wakeonlan_3_api(monkeypatch) -> None:
+    sender = Mock()
+    monkeypatch.setattr("custom_components.samsung_local.power.wakeonlan.send_magic_packet", sender)
+
+    _send_magic_packet("02:00:00:00:00:01", "192.0.2.255", 9)
+
+    sender.assert_called_once_with("02:00:00:00:00:01", ip_address="192.0.2.255", port=9)
+
+
+def test_sender_supports_wakeonlan_4_api(monkeypatch) -> None:
+    sender = Mock()
+    monkeypatch.delattr("custom_components.samsung_local.power.wakeonlan.send_magic_packet")
+    monkeypatch.setattr(
+        "custom_components.samsung_local.power.wakeonlan.wake", sender, raising=False
+    )
+
+    _send_magic_packet("02:00:00:00:00:01", "192.0.2.255", 9)
+
+    sender.assert_called_once_with("02:00:00:00:00:01", host="192.0.2.255", port=9)
 
 
 @pytest.mark.parametrize(
@@ -27,7 +52,7 @@ def test_invalid_wol_configuration_is_rejected(config: WakeOnLanConfig) -> None:
 
 async def test_power_on_sends_packet_and_waits_for_endpoint(monkeypatch) -> None:
     sender = Mock()
-    monkeypatch.setattr("custom_components.samsung_local.power.wake", sender)
+    monkeypatch.setattr("custom_components.samsung_local.power._send_magic_packet", sender)
     monkeypatch.setattr("custom_components.samsung_local.power.asyncio.sleep", AsyncMock())
     manager = SamsungTvPowerManager(
         WakeOnLanConfig(
@@ -43,14 +68,14 @@ async def test_power_on_sends_packet_and_waits_for_endpoint(monkeypatch) -> None
 
     await manager.async_power_on(probe, connect)
 
-    sender.assert_called_once_with("02:00:00:00:00:01", ip_address="192.0.2.255", port=9)
+    sender.assert_called_once_with("02:00:00:00:00:01", "192.0.2.255", 9)
     connect.assert_awaited_once()
     assert manager.last_success is not None
 
 
 async def test_power_on_reports_packet_send_failure(monkeypatch) -> None:
     monkeypatch.setattr(
-        "custom_components.samsung_local.power.wake",
+        "custom_components.samsung_local.power._send_magic_packet",
         Mock(side_effect=OSError("network down")),
     )
     manager = SamsungTvPowerManager(
@@ -63,7 +88,7 @@ async def test_power_on_reports_packet_send_failure(monkeypatch) -> None:
 
 
 async def test_power_on_times_out_when_tv_never_answers(monkeypatch) -> None:
-    monkeypatch.setattr("custom_components.samsung_local.power.wake", Mock())
+    monkeypatch.setattr("custom_components.samsung_local.power._send_magic_packet", Mock())
     monkeypatch.setattr(WakeOnLanConfig, "validate", lambda self: None)
     manager = SamsungTvPowerManager(
         WakeOnLanConfig(True, "02:00:00:00:00:01", timeout=0.01, retries=1)
@@ -75,7 +100,7 @@ async def test_power_on_times_out_when_tv_never_answers(monkeypatch) -> None:
 
 
 async def test_power_on_fails_when_websocket_never_reconnects(monkeypatch) -> None:
-    monkeypatch.setattr("custom_components.samsung_local.power.wake", Mock())
+    monkeypatch.setattr("custom_components.samsung_local.power._send_magic_packet", Mock())
     monkeypatch.setattr(WakeOnLanConfig, "validate", lambda self: None)
     manager = SamsungTvPowerManager(
         WakeOnLanConfig(True, "02:00:00:00:00:01", timeout=0.01, retries=1)
@@ -91,7 +116,7 @@ async def test_power_on_fails_when_websocket_never_reconnects(monkeypatch) -> No
 
 async def test_power_on_does_not_send_when_tv_is_already_ready(monkeypatch) -> None:
     sender = Mock()
-    monkeypatch.setattr("custom_components.samsung_local.power.wake", sender)
+    monkeypatch.setattr("custom_components.samsung_local.power._send_magic_packet", sender)
     manager = SamsungTvPowerManager(
         WakeOnLanConfig(True, "02:00:00:00:00:01", timeout=10, retries=1)
     )

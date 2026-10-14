@@ -8,12 +8,23 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from wakeonlan import send_magic_packet as wake
+import wakeonlan
 
 from .exceptions import CannotConnectError, InvalidCommandError
 
 PowerProbe = Callable[[], Awaitable[bool]]
 ConnectCallback = Callable[[], Awaitable[None]]
+
+
+def _send_magic_packet(mac_address: str, destination: str, port: int) -> None:
+    """Support Home Assistant's 3.x API and the forward-compatible 4.x API."""
+    if callable(sender := getattr(wakeonlan, "send_magic_packet", None)):
+        sender(mac_address, ip_address=destination, port=port)
+        return
+    if callable(sender := getattr(wakeonlan, "wake", None)):
+        sender(mac_address, host=destination, port=port)
+        return
+    raise RuntimeError("installed wakeonlan package has no supported send function")
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,10 +92,10 @@ class SamsungTvPowerManager:
                 self.last_attempt_count = attempt
                 try:
                     await asyncio.to_thread(
-                        wake,
+                        _send_magic_packet,
                         mac_address,
-                        ip_address=self.config.broadcast_address,
-                        port=self.config.port,
+                        self.config.broadcast_address,
+                        self.config.port,
                     )
                 except OSError as err:
                     self.last_error = type(err).__name__

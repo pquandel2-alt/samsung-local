@@ -1,4 +1,4 @@
-# Testbericht 0.1.0-beta.5
+# Testbericht 0.1.0-beta.6
 
 Datum: 14. Oktober 2026
 
@@ -9,12 +9,12 @@ Datum: 14. Oktober 2026
 | `python -m compileall` | erfolgreich |
 | `ruff check custom_components tests` | erfolgreich |
 | `mypy custom_components/samsung_local` (strict) | erfolgreich, 41 Dateien |
-| `pytest -q` (Python 3.14.2 + echte HA-Harness) | 72 erfolgreich, 0 fehlgeschlagen |
+| `pytest -q` (Python 3.14.2 + echte HA-Harness) | 74 erfolgreich, 0 fehlgeschlagen |
 | Coverage | 73 % gesamt; Apps 92 %, Power 96 %, Services 90 %, Connection Manager 90 % |
 | `pip-audit --local` im Runtime-/Unit-Test-Satz | keine bekannten Schwachstellen |
 | JSON-Parsing Manifest/Strings/Übersetzungen | erfolgreich |
 
-Die 72 Tests umfassen Capability-Mapping, Phantom-Unterdrückung,
+Die 74 Tests umfassen Capability-Mapping, Phantom-Unterdrückung,
 Firmware-Add/Remove, Zertifikats-/PSK-/Tokenvalidierung,
 Completion-Deduplizierung, Reconnect-Backoff, WLAN-Ausfall,
 Befehlssynchronisierung, WAN-blockierte Kernlogik, TV-Profilgrundsätze,
@@ -33,7 +33,7 @@ HA-Neustart mit bereits gekoppeltem WOL-TV im nicht erreichbaren Deep Standby.
 
 ## Testumgebungen und Repository-Validatoren
 
-Die Kernsuite lief zusätzlich auf dem vorhandenen Python 3.12.3 (57 Tests
+Die Kernsuite lief zusätzlich auf dem vorhandenen Python 3.12.3 (59 Tests
 erfolgreich, 4 HA-Harness-Module erwartungsgemäß übersprungen).
 Für die Integrationstests wurde CPython 3.14.2 installiert. Die aktuell
 verfügbare `pytest-homeassistant-custom-component==0.13.338` bindet
