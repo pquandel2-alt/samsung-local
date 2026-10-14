@@ -25,7 +25,7 @@ test = [
   "wakeonlan==4.0.0",
 ]
 homeassistant-test = [
-  "pytest-homeassistant-custom-component==0.13.338",
+  "pytest-homeassistant-custom-component==0.13.372",
 ]
 dev = [
   "mypy>=1.18",
