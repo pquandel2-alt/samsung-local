@@ -43,7 +43,7 @@ async def test_power_on_sends_packet_and_waits_for_endpoint(monkeypatch) -> None
 
     await manager.async_power_on(probe, connect)
 
-    sender.assert_called_once_with("02:00:00:00:00:01", host="192.0.2.255", port=9)
+    sender.assert_called_once_with("02:00:00:00:00:01", ip_address="192.0.2.255", port=9)
     connect.assert_awaited_once()
     assert manager.last_success is not None
 

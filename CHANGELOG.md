@@ -10,6 +10,14 @@ Projekt verwendet [Semantic Versioning](https://semver.org/).
 - Aufnahme in den HACS-Standardkatalog steht aus; die Installation als
   benutzerdefiniertes HACS-Repository ist vorbereitet.
 
+## [0.1.0-beta.5] - 2026-10-14
+
+### Fixed
+
+- `wakeonlan` auf die von Home Assistant verwendete Version 3.3.0 gepinnt,
+  damit Hassfest und die Home-Assistant-Abhängigkeitsauflösung konfliktfrei
+  bleiben. Der in Beta 4 eingeführte WOL-Code bleibt funktional unverändert.
+
 ## [0.1.0-beta.4] - 2026-10-14
 
 ### Added
@@ -63,7 +71,8 @@ Projekt verwendet [Semantic Versioning](https://semver.org/).
 - Deutsche und englische Oberfläche, HACS-Metadaten, CI-Konfiguration,
   Tests, Sicherheits-, Installations-, Migrations- und Hardwaretestdokumente.
 
-[Unreleased]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.4...HEAD
+[Unreleased]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.5...HEAD
+[0.1.0-beta.5]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.4...v0.1.0-beta.5
 [0.1.0-beta.4]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.3...v0.1.0-beta.4
 [0.1.0-beta.3]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/pquandel2-alt/samsung-local/compare/v0.1.0-beta.1...v0.1.0-beta.2

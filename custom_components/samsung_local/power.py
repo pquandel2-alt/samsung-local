@@ -8,7 +8,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from wakeonlan import wake
+from wakeonlan import send_magic_packet as wake
 
 from .exceptions import CannotConnectError, InvalidCommandError
 
@@ -83,7 +83,7 @@ class SamsungTvPowerManager:
                     await asyncio.to_thread(
                         wake,
                         mac_address,
-                        host=self.config.broadcast_address,
+                        ip_address=self.config.broadcast_address,
                         port=self.config.port,
                     )
                 except OSError as err:

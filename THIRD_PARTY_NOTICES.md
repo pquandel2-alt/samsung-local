@@ -5,7 +5,7 @@ Samsung Local dynamically uses the following unmodified Python packages:
 - `smartthings-local` 0.1.24, copyright Jack Nagy, MIT License.
 - `samsungtvws` 3.0.6, copyright its contributors, GNU LGPL-3.0.
 - `cbor2` 5.9.0, MIT License.
-- `wakeonlan` 4.0.0, copyright Remco Schrijver and contributors, MIT License.
+- `wakeonlan` 3.3.0, copyright Remco Schrijver and contributors, MIT License.
 
 The integration's OCF field mappings were independently implemented from the
 publicly visible behavior and documentation of LocalThings. Research and
