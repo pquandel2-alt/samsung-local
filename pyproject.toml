@@ -21,7 +21,7 @@ test = [
   "pytest-asyncio>=1.1",
   "pytest-cov>=6.2",
   "samsungtvws[async]==3.0.6",
-  "smartthings-local==0.1.24",
+  "smartthings-local==0.1.25",
   "wakeonlan==3.3.0",
 ]
 homeassistant-test = [
